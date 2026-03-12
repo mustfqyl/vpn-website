@@ -82,9 +82,15 @@ export async function GET(req: NextRequest) {
                 };
             }
 
-            // --- SAFEGUARD: Explicitly remove data limit for Premium roles ---
+            // --- PROACTIVE FIX: Remove data limit for Premium roles in the panel ---
             if (role === 'PREMIUM') {
-                userData.usage.limitGB = null;
+                if (userData.usage.limitGB !== null) {
+                    logger.info({ username: user.username, currentLimit: userData.usage.limitGB }, 'Proactively removing data limit for Premium user (SSE)');
+                    vpnProvider.updateUser(user.username, { dataLimit: null }).catch(err => {
+                        logger.error({ err, username: user.username }, 'Failed to proactively remove data limit (SSE)');
+                    });
+                    userData.usage.limitGB = null;
+                }
             }
 
             await push({ stats, user: userData }, 'update');

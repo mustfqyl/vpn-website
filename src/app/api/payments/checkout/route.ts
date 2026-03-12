@@ -73,7 +73,7 @@ export async function POST(request: Request) {
             const success = await vpnProvider.updateUser(authCode, {
                 group: 'Premium',
                 expire: newExpireUnix,
-                dataLimit: planConfig.dataLimitGB ? planConfig.dataLimitGB * 1024 * 1024 * 1024 : null,
+                dataLimit: null, // Premium always unlimited
                 status: 'active',
                 note: 'Premium Upgrade'
             });

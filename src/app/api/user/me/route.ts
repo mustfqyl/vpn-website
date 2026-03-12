@@ -67,9 +67,15 @@ export async function GET() {
             subscriptionUrl = pgUser.subscriptionUrl;
         }
 
-        // --- SAFEGUARD: Explicitly remove data limit for Premium/Admin roles ---
+        // --- PROACTIVE FIX: Remove data limit for Premium/Admin roles in the panel ---
         if (role === 'PREMIUM' || role === 'ADMIN') {
-            limitGB = null;
+            if (limitGB !== null) {
+                logger.info({ username: user.username, currentLimit: limitGB }, 'Proactively removing data limit for Premium user');
+                vpnProvider.updateUser(user.username, { dataLimit: null }).catch(err => {
+                    logger.error({ err, username: user.username }, 'Failed to proactively remove data limit');
+                });
+                limitGB = null;
+            }
         }
 
         return NextResponse.json({
