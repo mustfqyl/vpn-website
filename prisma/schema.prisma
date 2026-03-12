@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model VpnUser {
+  id          BigInt    @id
+  username    String    @unique
+  status      String
+  usedTraffic BigInt    @map("used_traffic")
+  dataLimit   BigInt?   @map("data_limit")
+  expire      DateTime?
+  createdAt   DateTime  @map("created_at")
+  groups      UsersGroupsAssociation[]
+
+  @@map("users")
+}
+
+model UsersGroupsAssociation {
+  userId   BigInt  @map("user_id")
+  groupsId BigInt  @map("groups_id")
+  user     VpnUser @relation(fields: [userId], references: [id])
+  group    Group   @relation(fields: [groupsId], references: [id])
+
+  @@id([userId, groupsId])
+  @@map("users_groups_association")
+}
+
+model Group {
+  id         BigInt   @id
+  name       String
+  isDisabled Boolean  @map("is_disabled")
+  users      UsersGroupsAssociation[]
+
+  @@map("groups")
+}
+
+model NodeUptimeLog {
+  id        BigInt   @id @default(autoincrement())
+  nodeName  String   @map("node_name")
+  status    String
+  ping      Int      @default(-1)
+  checkedAt DateTime @default(now()) @map("checked_at")
+
+  @@index([nodeName, checkedAt])
+  @@map("node_uptime_logs")
+}
