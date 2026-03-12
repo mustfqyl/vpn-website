@@ -10,6 +10,7 @@ import { ProfileSettings } from "./components/ProfileSettings";
 import { NodeDetailPopup } from "./components/NodeDetailPopup";
 import { siteConfig } from "@/lib/siteConfig";
 import { Shield } from "lucide-react";
+import { copyToClipboard as copyToClipboardUtil } from "@/lib/clipboard";
 
 interface ConnectedDevice {
     id: string;
@@ -161,12 +162,10 @@ export default function DashboardPage() {
 
     const copyToClipboard = async (text: string) => {
         if (!text) return;
-        try {
-            await navigator.clipboard.writeText(text);
+        const success = await copyToClipboardUtil(text);
+        if (success) {
             setCopySuccess(true);
             setTimeout(() => setCopySuccess(false), 2000);
-        } catch (err) {
-            console.error('Failed to copy text: ', err);
         }
     };
 

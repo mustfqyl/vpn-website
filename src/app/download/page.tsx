@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
+import { copyToClipboard } from "@/lib/clipboard";
 
 export default function DownloadPage() {
   const [copied, setCopied] = useState(false);
@@ -24,10 +25,12 @@ export default function DownloadPage() {
   // Auth logic removed as Navbar handles its own state
   // If this page needed isLoggedIn for content, it would be added back here.
 
-  const copyCommand = (cmd: string) => {
-    navigator.clipboard.writeText(cmd);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const copyCommand = async (cmd: string) => {
+    const success = await copyToClipboard(cmd);
+    if (success) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   const ThemeSwitcher = () => {
