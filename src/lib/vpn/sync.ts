@@ -49,7 +49,7 @@ export class VpnSyncService {
                         expire: panelUser.expiresAtUnix ? new Date(panelUser.expiresAtUnix) : null,
                     },
                     create: {
-                        id: BigInt(panelUser.id),
+                        id: BigInt(panelUser.id ?? 0),
                         username: panelUser.username,
                         status: panelUser.status,
                         usedTraffic: BigInt(panelUser.usedTrafficBytes),

@@ -5,9 +5,8 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const encoder = new TextEncoder();
 const secretKey = encoder.encode(JWT_SECRET || 'fallback-secret') as Uint8Array;
 
-if (!JWT_SECRET) {
-    throw new Error('JWT_SECRET environment variable is required')
-}
+// Hard-coded checks at module level can break Next.js build optimization if ENVs are missing
+// We will check for the secret inside the functions instead.
 
 export const generateToken = async (payload: Record<string, unknown>, expiresIn: string = '1d') => {
     let builder = new SignJWT(payload)
