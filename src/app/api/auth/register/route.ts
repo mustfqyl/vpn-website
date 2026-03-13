@@ -27,7 +27,7 @@ export async function POST(request: Request) {
         const { plan, authCode: providedAuthCode } = registerSchema.parse(body)
 
         // 1. Use provided code from frontend, or generate 4x4 alphanumerical code as fallback
-        const authCode = providedAuthCode || generateRawCode();
+        const authCode = providedAuthCode || await generateRawCode();
 
         const planName = plan;
         const planConfig = getPlanConfig(planName);

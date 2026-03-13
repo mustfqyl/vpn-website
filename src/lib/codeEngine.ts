@@ -1,20 +1,59 @@
 import { createHmac } from "crypto";
 import fs from "fs";
 import path from "path";
+import { Redis } from '@upstash/redis';
 
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-const STATE_FILE = path.join(process.cwd(), "data", "state.json");
 
-function readCounter(): bigint {
+// Use /tmp for Vercel's read-only environment fallback
+const isVercel = process.env.VERCEL === '1';
+const STATE_DIR = isVercel ? "/tmp" : path.join(process.cwd(), "data");
+const STATE_FILE = path.join(STATE_DIR, "state.json");
+
+// Initialize Redis if credentials are available
+const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
+const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+const redis = redisUrl && redisToken ? new Redis({ url: redisUrl, token: redisToken }) : null;
+const REDIS_KEY = 'auth-code-counter';
+
+async function readCounter(): Promise<bigint> {
+  // 1. Try Redis first (Primary for production)
+  if (redis) {
+    try {
+      const val = await redis.get<string>(REDIS_KEY);
+      if (val) return BigInt(val);
+    } catch (error) {
+      console.error('Redis read error:', error);
+    }
+  }
+
+  // 2. Fallback to File system
   try {
     if (!fs.existsSync(STATE_FILE)) return 1n;
     return BigInt(JSON.parse(fs.readFileSync(STATE_FILE, "utf8")).counter ?? "1");
   } catch { return 1n; }
 }
 
-function saveCounter(counter: bigint): void {
-  fs.mkdirSync(path.dirname(STATE_FILE), { recursive: true });
-  fs.writeFileSync(STATE_FILE, JSON.stringify({ counter: counter.toString() }, null, 2));
+async function saveCounter(counter: bigint): Promise<void> {
+  // 1. Save to Redis (Primary for production)
+  if (redis) {
+    try {
+      await redis.set(REDIS_KEY, counter.toString());
+      return;
+    } catch (error) {
+      console.error('Redis save error:', error);
+    }
+  }
+
+  // 2. Fallback to File system (only works if directory is writable)
+  try {
+    if (!fs.existsSync(STATE_DIR)) {
+      fs.mkdirSync(STATE_DIR, { recursive: true });
+    }
+    fs.writeFileSync(STATE_FILE, JSON.stringify({ counter: counter.toString() }, null, 2));
+  } catch (error) {
+    console.error('File system save error:', error);
+  }
 }
 
 function counterToCode(counter: bigint): string {
@@ -46,9 +85,9 @@ export function isValidFormat(code: string): boolean {
   return /^[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/.test(code.toUpperCase());
 }
 
-export function issueCode(): string {
-  const counter = readCounter();
+export async function issueCode(): Promise<string> {
+  const counter = await readCounter();
   const code = counterToCode(counter);
-  saveCounter(counter + 1n);
+  await saveCounter(counter + 1n);
   return code;
 }
