@@ -5,8 +5,6 @@ import { vpnProvider } from '@/lib/vpn/factory'
 import { getAuthenticatedUser } from '@/lib/authHelper'
 import { handleApiError, AppError } from '@/lib/api-error'
 import { logger } from '@/lib/logger'
-import { VpnSyncService } from '@/lib/vpn/sync'
-import { getPlanConfig } from '@/lib/vpn/plans'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,7 +20,7 @@ export async function GET() {
         let bigIntId: bigint;
         try {
             bigIntId = BigInt(userId);
-        } catch (e) {
+        } catch {
             logger.warn({ userId }, 'Invalid user ID format in token. Clearing session.');
             const cookieStore = await cookies();
             cookieStore.delete('token');
@@ -30,6 +28,7 @@ export async function GET() {
         }
 
         // Fetch user from PasarGuard DB via Prisma
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const user = await (prisma as any).vpnUser.findUnique({
             where: { id: bigIntId },
             include: {
@@ -51,7 +50,7 @@ export async function GET() {
         const pgUser = await vpnProvider.getUser(user.username);
 
         // Determine role based on groups
-        const groupNames = user.groups.map((ug: any) => ug.group.name.toLowerCase());
+        const groupNames = user.groups.map((ug: { group: { name: string } }) => ug.group.name.toLowerCase());
         const role = groupNames.includes('premium') ? 'PREMIUM' : (groupNames.includes('root') ? 'ADMIN' : 'TRIAL');
 
         // Usage and Status logic
@@ -85,7 +84,9 @@ export async function GET() {
             createdAt: user.createdAt.toISOString(),
         }, {
             headers: {
-                'Cache-Control': 'private, max-age=30'
+                'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0',
             }
         })
 
@@ -102,6 +103,7 @@ export async function DELETE() {
         const authUser = await getAuthenticatedUser();
         if (!authUser) throw new AppError('Unauthorized', 401);
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const user = await (prisma as any).vpnUser.findUnique({
             where: { id: BigInt(authUser.userId) }
         });

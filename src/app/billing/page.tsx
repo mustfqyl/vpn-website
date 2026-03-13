@@ -54,7 +54,13 @@ export default function BillingPage() {
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const res = await fetch("/api/user/me");
+                const res = await fetch("/api/user/me", {
+                    cache: "no-store",
+                    headers: {
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    }
+                });
                 if (res.ok) {
                     const data = await res.json();
                     setUser(data);
@@ -127,8 +133,14 @@ export default function BillingPage() {
 
     const handlePaymentSuccess = () => {
         setSuccessMessage("Mock Payment Confirmed! Your subscription has been extended instantly.");
-        // Refresh user data
-        fetch("/api/user/me")
+        // Refresh user data bypass cache
+        fetch("/api/user/me", {
+            cache: "no-store",
+            headers: {
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+            }
+        })
             .then((r) => r.json())
             .then((d) => setUser(d))
             .catch(() => null);
