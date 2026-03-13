@@ -1,7 +1,7 @@
 import { createHmac } from "crypto";
 import fs from "fs";
 import path from "path";
-import { Redis } from '@upstash/redis';
+import { prisma } from './prisma';
 
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
@@ -9,22 +9,17 @@ const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const isVercel = process.env.VERCEL === '1';
 const STATE_DIR = isVercel ? "/tmp" : path.join(process.cwd(), "data");
 const STATE_FILE = path.join(STATE_DIR, "state.json");
-
-// Initialize Redis if credentials are available
-const redisUrl = process.env.UPSTASH_REDIS_REST_URL;
-const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
-const redis = redisUrl && redisToken ? new Redis({ url: redisUrl, token: redisToken }) : null;
-const REDIS_KEY = 'auth-code-counter';
+const DB_COUNTER_KEY = 'auth-code-counter';
 
 async function readCounter(): Promise<bigint> {
-  // 1. Try Redis first (Primary for production)
-  if (redis) {
-    try {
-      const val = await redis.get<string>(REDIS_KEY);
-      if (val) return BigInt(val);
-    } catch (error) {
-      console.error('Redis read error:', error);
-    }
+  // 1. Try Database first (Primary for production)
+  try {
+    const state = await prisma.appState.findUnique({
+      where: { key: DB_COUNTER_KEY }
+    });
+    if (state) return BigInt(state.value);
+  } catch (error) {
+    console.error('Database read error:', error);
   }
 
   // 2. Fallback to File system
@@ -35,14 +30,16 @@ async function readCounter(): Promise<bigint> {
 }
 
 async function saveCounter(counter: bigint): Promise<void> {
-  // 1. Save to Redis (Primary for production)
-  if (redis) {
-    try {
-      await redis.set(REDIS_KEY, counter.toString());
-      return;
-    } catch (error) {
-      console.error('Redis save error:', error);
-    }
+  // 1. Save to Database (Primary for production)
+  try {
+    await prisma.appState.upsert({
+      where: { key: DB_COUNTER_KEY },
+      update: { value: counter.toString() },
+      create: { key: DB_COUNTER_KEY, value: counter.toString() }
+    });
+    return;
+  } catch (error) {
+    console.error('Database save error:', error);
   }
 
   // 2. Fallback to File system (only works if directory is writable)
