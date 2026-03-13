@@ -30,12 +30,39 @@ export class VpnSyncService {
     }
 
     /**
-     * Background sync task.
+     * Reconciles all users between the portal database and the VPN panel.
      */
     static async syncAll(force = false) {
-        // Orphan cleanup is handled by PasarGuard itself or manually via its panel.
-        // We'll keep this as a stub to avoid breaking existing callers.
-        logger.info({ force }, 'VpnSyncService.syncAll called (Stub)');
+        logger.info({ force }, 'VpnSyncService.syncAll starting');
+        try {
+            const panelUsers = await vpnProvider.listUsers();
+            logger.info({ count: panelUsers.length }, 'Fetched users from VPN panel');
+
+            for (const panelUser of panelUsers) {
+                // Update or Create in local DB
+                await prisma.vpnUser.upsert({
+                    where: { username: panelUser.username },
+                    update: {
+                        status: panelUser.status,
+                        usedTraffic: BigInt(panelUser.usedTrafficBytes),
+                        dataLimit: panelUser.dataLimitBytes ? BigInt(panelUser.dataLimitBytes) : null,
+                        expire: panelUser.expiresAtUnix ? new Date(panelUser.expiresAtUnix) : null,
+                    },
+                    create: {
+                        id: BigInt(panelUser.id),
+                        username: panelUser.username,
+                        status: panelUser.status,
+                        usedTraffic: BigInt(panelUser.usedTrafficBytes),
+                        dataLimit: panelUser.dataLimitBytes ? BigInt(panelUser.dataLimitBytes) : null,
+                        expire: panelUser.expiresAtUnix ? new Date(panelUser.expiresAtUnix) : null,
+                        createdAt: new Date()
+                    }
+                });
+            }
+            logger.info('VpnSyncService.syncAll completed successfully');
+        } catch (error) {
+            logger.error({ error }, 'Error in VpnSyncService.syncAll');
+        }
     }
 }
 

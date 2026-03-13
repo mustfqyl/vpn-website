@@ -22,3 +22,13 @@ export const logger = pino({
         },
     },
 });
+
+// Extension for Audit Logging
+export const audit = (action: string, metadata: Record<string, any>) => {
+    logger.info({
+        audit: true,
+        action,
+        ...metadata,
+        timestamp: new Date().toISOString()
+    }, `AUDIT: ${action}`);
+};

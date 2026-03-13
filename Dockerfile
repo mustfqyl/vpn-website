@@ -44,5 +44,5 @@ USER nextjs
 EXPOSE 3000
 ENV PORT=3000
 
-# At runtime, we re-generate the client with the real credentials and push schema
-CMD ["sh", "-c", "npx prisma generate && npx prisma db push && node server.js"]
+# At runtime, we re-generate the client with the real credentials and apply migrations
+CMD ["sh", "-c", "npx prisma generate && npx prisma migrate deploy && node server.js"]

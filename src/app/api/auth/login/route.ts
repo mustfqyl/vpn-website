@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { cookies } from 'next/headers'
 import { handleApiError, AppError } from '@/lib/api-error'
 import { VpnSyncService } from '@/lib/vpn/sync'
+import { getClientIp } from '@/lib/network'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,9 +17,9 @@ const loginSchema = z.object({
 
 export async function POST(request: Request) {
     try {
-        const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
+        const ip = getClientIp(request);
         if (!(await checkRateLimit(ip, 5, 60 * 1000))) {
-            return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+            return NextResponse.json({ error: 'Login attempt limit reached. Please wait and try again.' }, { status: 429 });
         }
 
         const body = await request.json()

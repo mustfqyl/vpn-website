@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { cookies } from 'next/headers'
 import { handleApiError, AppError } from '@/lib/api-error'
 import { prisma } from '@/lib/prisma'
+import { getClientIp } from '@/lib/network'
 import { generateRawCode } from '@/lib/auth.utils'
 
 export const dynamic = 'force-dynamic'
@@ -18,9 +19,9 @@ const registerSchema = z.object({
 
 export async function POST(request: Request) {
     try {
-        const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
-        if (!(await checkRateLimit(ip, 3, 60 * 1000))) {
-            throw new AppError('Too many requests', 429);
+        const ip = getClientIp(request);
+        if (!(await checkRateLimit(ip, 5, 60 * 1000))) {
+            throw new AppError('Registration attempt limit reached. Please wait and try again.', 429);
         }
 
         const body = await request.json()

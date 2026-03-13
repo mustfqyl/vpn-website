@@ -13,9 +13,14 @@ export class PasarGuardProvider implements IVpnProvider {
     private tokenExpiry: number = 0;
 
     constructor() {
-        this.baseUrl = (process.env.VPN_PANEL_API_URL || 'https://panel.example.com').replace(/\/$/, '');
-        this.username = process.env.VPN_PANEL_ADMIN_USERNAME || 'admin';
-        this.password = process.env.VPN_PANEL_ADMIN_PASSWORD || 'password';
+        this.baseUrl = (process.env.VPN_PANEL_API_URL || '').replace(/\/$/, '');
+        this.username = process.env.VPN_PANEL_ADMIN_USERNAME || '';
+        this.password = process.env.VPN_PANEL_ADMIN_PASSWORD || '';
+
+        if (!this.baseUrl || !this.username || !this.password) {
+            logger.error('VPN Panel configuration is incomplete. VPN_PANEL_API_URL, VPN_PANEL_ADMIN_USERNAME, and VPN_PANEL_ADMIN_PASSWORD are required.');
+            throw new Error('VPN Panel configuration is incomplete');
+        }
     }
 
     private async getAdminToken(): Promise<string> {

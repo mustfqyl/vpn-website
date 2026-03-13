@@ -57,12 +57,15 @@ export default function RegisterPage() {
                 if (res.ok && data.code) {
                     setFormData(prev => ({ ...prev, authCode: data.code }));
                     setError("");
+                } else if (res.status === 429) {
+                    // Handle rate limit gracefully without throwing/logging as error
+                    setError(data.error);
                 } else {
-                    throw new Error(data.error || "Failed to generate access code");
+                    throw new Error(data.error || "Failed to generate access code.");
                 }
             } catch (err) {
                 console.error("Failed to fetch auth code", err);
-                setError("Failed to generate access code.");
+                setError(err instanceof Error ? err.message : "Failed to generate access code.");
             } finally {
                 setFetchingCode(false);
             }
@@ -235,7 +238,7 @@ export default function RegisterPage() {
                                     }}
                                     className="hover-lift"
                                 >
-                                    {fetchingCode ? "XXXX-XXXX-XXXX" : (copied ? "¡COPIED!" : formData.authCode)}
+                                {fetchingCode ? "XXXX-XXXX-XXXX" : (copied ? "¡COPIED!" : (formData.authCode || "XXXX-XXXX-XXXX"))}
                                 </div>
                                 
                                 <div style={{ display: "flex", justifyContent: "center", gap: "1rem", marginTop: "1rem" }}>

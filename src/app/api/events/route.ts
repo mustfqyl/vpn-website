@@ -83,27 +83,6 @@ export async function GET(req: NextRequest) {
                 };
             }
 
-            // --- PROACTIVE FIX: Sync data limits based on role in the panel ---
-            if (role === 'PREMIUM') {
-                if (userData.usage.limitGB !== null) {
-                    logger.info({ username: user.username, currentLimit: userData.usage.limitGB }, 'Proactively removing data limit for Premium user (SSE)');
-                    vpnProvider.updateUser(user.username, { dataLimit: null }).catch(err => {
-                        logger.error({ err, username: user.username }, 'Failed to proactively remove data limit (SSE)');
-                    });
-                    userData.usage.limitGB = null;
-                }
-            } else {
-                // Trial role enforcement
-                if (userData.usage.limitGB === null) {
-                    const planConfig = getPlanConfig('Trial');
-                    const trialLimit = planConfig.dataLimitGB || 5;
-                    logger.info({ username: user.username }, `Proactively reapplying ${trialLimit}GB limit for Trial user (SSE)`);
-                    vpnProvider.updateUser(user.username, { dataLimit: trialLimit * 1024 * 1024 * 1024 }).catch(err => {
-                        logger.error({ err, username: user.username }, 'Failed to proactively reapply trial limit (SSE)');
-                    });
-                    userData.usage.limitGB = trialLimit;
-                }
-            }
 
             await push({ stats, user: userData }, 'update');
         } catch (err) {

@@ -8,11 +8,6 @@ export async function GET(
     { params }: { params: Promise<{ nodeName: string }> }
 ) {
     try {
-        const searchParams = request.nextUrl.searchParams;
-        const page = parseInt(searchParams.get('page') ?? '1');
-        const limit = parseInt(searchParams.get('limit') ?? '100');
-        const skip = (page - 1) * limit;
-
         const { nodeName } = await params;
         const decodedName = decodeURIComponent(nodeName);
 
@@ -29,9 +24,7 @@ export async function GET(
             },
             orderBy: {
                 checkedAt: 'desc'
-            },
-            skip,
-            take: limit
+            }
         });
 
         // Group by day (YYYY-MM-DD)

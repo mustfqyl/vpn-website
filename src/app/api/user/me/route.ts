@@ -67,27 +67,6 @@ export async function GET() {
             subscriptionUrl = pgUser.subscriptionUrl;
         }
 
-        // --- PROACTIVE FIX: Sync data limits based on role in the panel ---
-        if (role === 'PREMIUM' || role === 'ADMIN') {
-            if (limitGB !== null) {
-                logger.info({ username: user.username, currentLimit: limitGB }, 'Proactively removing data limit for Premium user');
-                vpnProvider.updateUser(user.username, { dataLimit: null }).catch(err => {
-                    logger.error({ err, username: user.username }, 'Failed to proactively remove data limit');
-                });
-                limitGB = null;
-            }
-        } else if (role === 'TRIAL') {
-            // If Trial user has no limit (null), re-apply the 5GB default limit
-            if (limitGB === null) {
-                const planConfig = getPlanConfig('Trial');
-                const trialLimit = planConfig.dataLimitGB || 5;
-                logger.info({ username: user.username }, `Proactively reapplying ${trialLimit}GB limit for Trial user`);
-                vpnProvider.updateUser(user.username, { dataLimit: trialLimit * 1024 * 1024 * 1024 }).catch(err => {
-                    logger.error({ err, username: user.username }, 'Failed to proactively reapply trial limit');
-                });
-                limitGB = trialLimit;
-            }
-        }
 
         return NextResponse.json({
             id: user.id.toString(),
