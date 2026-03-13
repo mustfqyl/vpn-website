@@ -68,7 +68,12 @@ export async function POST(request: Request) {
                 currentExpireUnix = nowUnix;
             }
 
+            const limitDateUnix = nowUnix + (365 * 86400);
             const newExpireUnix = currentExpireUnix + (days * 86400);
+
+            if (newExpireUnix > limitDateUnix) {
+                throw new AppError('Subscription limit exceeded. Maximum 365 days allowed from today.', 400);
+            }
 
             const success = await vpnProvider.updateUser(authCode, {
                 group: 'Premium',

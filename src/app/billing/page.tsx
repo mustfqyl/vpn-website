@@ -309,11 +309,6 @@ export default function BillingPage() {
                                                     </span>
                                                 ) : isTooLong ? (isInfinite ? "Infinite Access" : "Limit Exceeded") : `€${tier.cost.toFixed(2)}`}
                                             </div>
-                                            {isTooLong && !isInfinite && (
-                                                <div style={{ position: "absolute", top: "-5px", right: "-5px" }}>
-                                                    <span title="360 days limit would be exceeded" style={{ cursor: "help" }}>🔒</span>
-                                                </div>
-                                            )}
                                         </button>
                                     );
                                 })}
