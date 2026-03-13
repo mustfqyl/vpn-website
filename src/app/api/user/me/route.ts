@@ -104,6 +104,10 @@ export async function GET() {
             subscriptionUrl,
             devices: [], // Devices model removed
             createdAt: user.createdAt.toISOString(),
+        }, {
+            headers: {
+                'Cache-Control': 'private, max-age=30'
+            }
         })
 
     } catch (error) {

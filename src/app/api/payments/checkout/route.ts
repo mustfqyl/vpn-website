@@ -49,7 +49,7 @@ export async function POST(request: Request) {
         const planConfig = getPlanConfig('Premium');
 
         // MOCK PAYMENT PROCESS
-        console.log(`Processing mock payment for user ${authCode} for plan Premium`);
+        logger.info({ authCode, plan: 'Premium' }, 'Processing mock payment');
 
         // Update user in PasarGuard via API
         try {

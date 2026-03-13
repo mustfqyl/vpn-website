@@ -1,55 +1,34 @@
 import { createHmac } from "crypto";
-import fs from "fs";
-import path from "path";
 import { prisma } from './prisma';
+import { logger } from './logger';
 
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-
-// Use /tmp for Vercel's read-only environment fallback
-const isVercel = process.env.VERCEL === '1';
-const STATE_DIR = isVercel ? "/tmp" : path.join(process.cwd(), "data");
-const STATE_FILE = path.join(STATE_DIR, "state.json");
 const DB_COUNTER_KEY = 'auth-code-counter';
 
 async function readCounter(): Promise<bigint> {
-  // 1. Try Database first (Primary for production)
+  // 1. Try Database (Primary source)
   try {
     const state = await prisma.appState.findUnique({
       where: { key: DB_COUNTER_KEY }
     });
     if (state) return BigInt(state.value);
+    return 1n;
   } catch (error) {
-    console.error('Database read error:', error);
+    logger.error({ error }, 'Database read error for auth-code-counter');
+    return 1n;
   }
-
-  // 2. Fallback to File system
-  try {
-    if (!fs.existsSync(STATE_FILE)) return 1n;
-    return BigInt(JSON.parse(fs.readFileSync(STATE_FILE, "utf8")).counter ?? "1");
-  } catch { return 1n; }
 }
 
 async function saveCounter(counter: bigint): Promise<void> {
-  // 1. Save to Database (Primary for production)
+  // Save to Database (Single source of truth)
   try {
     await prisma.appState.upsert({
       where: { key: DB_COUNTER_KEY },
       update: { value: counter.toString() },
       create: { key: DB_COUNTER_KEY, value: counter.toString() }
     });
-    return;
   } catch (error) {
-    console.error('Database save error:', error);
-  }
-
-  // 2. Fallback to File system (only works if directory is writable)
-  try {
-    if (!fs.existsSync(STATE_DIR)) {
-      fs.mkdirSync(STATE_DIR, { recursive: true });
-    }
-    fs.writeFileSync(STATE_FILE, JSON.stringify({ counter: counter.toString() }, null, 2));
-  } catch (error) {
-    console.error('File system save error:', error);
+    logger.error({ error }, 'Database save error for auth-code-counter');
   }
 }
 

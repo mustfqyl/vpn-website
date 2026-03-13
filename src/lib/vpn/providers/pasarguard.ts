@@ -171,7 +171,7 @@ export class PasarGuardProvider implements IVpnProvider {
 
         if (!res.ok) {
             const errorText = await res.text();
-            console.log('--- MARZBAN API ERROR ---', errorText);
+            logger.error({ errorText, username }, 'PasarGuard API Error during user creation');
 
             if (res.status === 409) {
                 const existing = await this.getUser(username);
@@ -219,7 +219,8 @@ export class PasarGuardProvider implements IVpnProvider {
         });
 
         if (!res.ok) {
-            console.log('--- MARZBAN UPDATE ERROR ---', await res.text());
+            const errorText = await res.text();
+            logger.error({ errorText, username }, 'PasarGuard API Error during user update');
         }
 
         return res.ok;

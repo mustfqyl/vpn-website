@@ -10,19 +10,16 @@ import * as headers from 'next/headers'
 // Mock dependencies
 vi.mock('@/lib/prisma', () => ({
     prisma: {
-        user: {
+        vpnUser: {
             findUnique: vi.fn(),
+            findMany: vi.fn(),
             create: vi.fn(),
             delete: vi.fn(),
         },
-        $transaction: vi.fn(),
-        subscription: {
-            create: vi.fn(),
+        usersGroupsAssociation: {
+            findMany: vi.fn(),
         },
-        usedEmail: {
-            findUnique: vi.fn(),
-            create: vi.fn(),
-        }
+        $transaction: vi.fn(),
     }
 }))
 
@@ -40,9 +37,8 @@ vi.mock('@/lib/rate-limit', () => ({
 }))
 
 vi.mock('@/lib/auth', () => ({
-    hashPassword: vi.fn(),
     generateToken: vi.fn(),
-    comparePassword: vi.fn(),
+    verifyToken: vi.fn(),
 }))
 
 vi.mock('next/headers', () => ({
@@ -64,106 +60,87 @@ describe('Auth API Routes', () => {
 
     describe('POST /api/auth/register', () => {
 
-        it('should return 400 if user already exists', async () => {
-            vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: '1', email: 'test@example.com' } as any)
+        it('should return 503 if VPN provisioning fails during registration', async () => {
+            vi.mocked(vpnProvider.createUser).mockRejectedValue(new Error('VPN API Down'))
 
             const req = new Request('http://localhost:3000/api/auth/register', {
                 method: 'POST',
-                body: JSON.stringify({ email: 'test@example.com', password: 'Password1!' })
+                body: JSON.stringify({ plan: 'Trial' })
             })
 
             const res = await registerRoute(req)
             const json = await res.json()
 
-            expect(res.status).toBe(400)
-            expect(json.error).toBe('User already exists')
+            expect(res.status).toBe(503)
+            expect(json.error).toContain('Failed to create VPN account')
         })
 
         it('should successfully register a new user and provision VPN access', async () => {
-            vi.mocked(prisma.user.findUnique).mockResolvedValue(null)
-            vi.mocked(auth.hashPassword).mockResolvedValue('hashedPw')
             vi.mocked(vpnProvider.createUser).mockResolvedValue({
-                username: 'pg_user',
+                id: 123,
+                username: 'ABC-123',
                 subscriptionUrl: 'https://vpn.example.com/sub'
             } as any)
-
-            // Mock the transaction
-            vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
-                // Return a mock user
-                return { id: 'user123', email: 'new@example.com', role: 'user', vpnUserId: 'pg_user', vpnSubUrl: 'https://vpn.example.com/sub' } as any
-            })
 
             vi.mocked(auth.generateToken).mockResolvedValue('fake_token')
 
             const req = new Request('http://localhost:3000/api/auth/register', {
                 method: 'POST',
-                body: JSON.stringify({ email: 'new@example.com', password: 'Password1!' })
+                body: JSON.stringify({ plan: 'Trial' })
             })
 
             const res = await registerRoute(req)
             const json = await res.json()
 
             expect(res.status).toBe(201)
-            expect(json.user.email).toBe('new@example.com')
-            expect(json.user.vpnUserId).toBe('pg_user')
+            expect(json.user.authCode).toBeDefined()
+            expect(json.user.vpnSubUrl).toBe('https://vpn.example.com/sub')
 
             // Ensure VPN provider was called
-            expect(vpnProvider.createUser).toHaveBeenCalledWith('new@example.com', expect.any(Object))
-        })
-
-        it('should return 503 if VPN provisioning fails during registration', async () => {
-            vi.mocked(prisma.user.findUnique).mockResolvedValue(null)
-            vi.mocked(vpnProvider.createUser).mockRejectedValue(new Error('VPN API Down'))
-
-            const req = new Request('http://localhost:3000/api/auth/register', {
-                method: 'POST',
-                body: JSON.stringify({ email: 'new@example.com', password: 'Password1!' })
-            })
-
-            const res = await registerRoute(req)
-            const json = await res.json()
-
-            // VPN provisoning failure stops registration early
-            expect(res.status).toBe(503)
-            expect(json.error).toContain('Failed to provision Trial VPN service')
-            expect(prisma.$transaction).not.toHaveBeenCalled()
+            expect(vpnProvider.createUser).toHaveBeenCalled()
         })
     })
 
     describe('POST /api/auth/login', () => {
 
         it('should return 401 for invalid credentials', async () => {
-            vi.mocked(prisma.user.findUnique).mockResolvedValue(null)
+            vi.mocked(prisma.vpnUser.findUnique).mockResolvedValue(null)
 
             const req = new Request('http://localhost:3000/api/auth/login', {
                 method: 'POST',
-                body: JSON.stringify({ email: 'fake@example.com', password: 'Password1!' })
+                body: JSON.stringify({ authCode: 'INVALID-CODE' })
             })
 
             const res = await loginRoute(req)
             const json = await res.json()
 
             expect(res.status).toBe(401)
-            expect(json.error).toBe('Invalid credentials')
+            expect(json.error).toBe('Invalid access code')
         })
 
         it('should successfully log in user and set cookie', async () => {
-            vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: '1', email: 'test@example.com', password: 'hashed', vpnUserId: 'pg123' } as any)
-            vi.mocked(auth.comparePassword).mockResolvedValue(true)
+            const mockUser = { 
+                id: BigInt(1), 
+                username: 'TEST-CODE', 
+                status: 'active', 
+                createdAt: new Date() 
+            }
+            vi.mocked(prisma.vpnUser.findUnique).mockResolvedValue(mockUser as any)
+            vi.mocked(prisma.usersGroupsAssociation.findMany).mockResolvedValue([
+                { group: { name: 'Trial' } }
+            ] as any)
             vi.mocked(auth.generateToken).mockResolvedValue('fake_token')
-            vi.mocked(vpnProvider.getUser).mockResolvedValue({ username: 'pg123', status: 'active' } as any)
-            vi.mocked(vpnProvider.listUsers).mockResolvedValue([])
 
             const req = new Request('http://localhost:3000/api/auth/login', {
                 method: 'POST',
-                body: JSON.stringify({ email: 'test@example.com', password: 'Password1!' })
+                body: JSON.stringify({ authCode: 'TEST-CODE' })
             })
 
             const res = await loginRoute(req)
             const json = await res.json()
 
             expect(res.status).toBe(200)
-            expect(json.user.email).toBe('test@example.com')
+            expect(json.user.authCode).toBe('TEST-CODE')
             expect(headers.cookies).toHaveBeenCalled()
         })
     })

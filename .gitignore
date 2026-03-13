@@ -6,5 +6,4 @@ tsconfig.tsbuildinfo
 .env*.local
 .vercel
 /src/generated/prisma
-/data/
 *.log

@@ -20,7 +20,8 @@ const globalForPrisma = globalThis as unknown as {
 const isInstanceValid = (instance: any) => {
   return instance && 
          typeof instance.vpnUser !== 'undefined' && 
-         typeof instance.nodeUptimeLog !== 'undefined'
+         typeof instance.nodeUptimeLog !== 'undefined' &&
+         typeof instance.appState !== 'undefined'
 }
 
 export const prisma = (globalForPrisma.prisma && isInstanceValid(globalForPrisma.prisma))

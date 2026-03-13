@@ -8,9 +8,7 @@ export async function generateRawCode(): Promise<string> {
     return await issueCode();
 }
 
-/**
- * Generates a unique 2x4 code by checking against the VPN users.
- */
+
 export async function generateUniqueAuthCode(): Promise<string> {
     let code = '';
     let isUnique = false;
