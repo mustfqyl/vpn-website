@@ -21,6 +21,8 @@
     "@prisma/adapter-pg": "^7.4.0",
     "@prisma/client": "^7.4.2",
     "@upstash/redis": "^1.36.3",
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
     "axios": "^1.13.6",
     "bcryptjs": "^3.0.3",
     "cookies-next": "^6.1.1",

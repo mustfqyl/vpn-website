@@ -4,6 +4,8 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import BackgroundEffects from "@/app/components/BackgroundEffects";
 
 import { siteConfig } from "@/lib/siteConfig";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
   title: `${siteConfig.name}VPN — Private & Fast`,
@@ -46,6 +48,8 @@ export default function RootLayout({
         <ThemeProvider>
           <BackgroundEffects />
           {children}
+          <Analytics />
+          <SpeedInsights />
         </ThemeProvider>
       </body>
     </html>
