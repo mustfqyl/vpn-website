@@ -1,0 +1,76 @@
+import { NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import { generateToken } from '@/lib/auth'
+import { vpnProvider } from '@/lib/vpn/factory'
+import { checkRateLimit } from '@/lib/rate-limit'
+import { z } from 'zod'
+import { cookies } from 'next/headers'
+import { handleApiError, AppError } from '@/lib/api-error'
+import { VpnSyncService } from '@/lib/vpn/sync'
+
+export const dynamic = 'force-dynamic'
+
+const loginSchema = z.object({
+    authCode: z.string(),
+})
+
+export async function POST(request: Request) {
+    try {
+        const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
+        if (!(await checkRateLimit(ip, 5, 60 * 1000))) {
+            return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+        }
+
+        const body = await request.json()
+        const { authCode } = loginSchema.parse(body)
+
+        const user = await prisma.vpnUser.findUnique({
+            where: { username: authCode },
+        })
+
+        if (!user) {
+            throw new AppError('Invalid access code', 401)
+        }
+
+        // Check if user is disabled
+        if (user.status === 'disabled') {
+            throw new AppError('Account is disabled', 403)
+        }
+
+        // Determine role based on group (Premium, Trial, root)
+        // Groups is an array of relation objects
+        const userGroups = await prisma.usersGroupsAssociation.findMany({
+            where: { userId: user.id },
+            include: { group: true }
+        });
+        
+        const groupNames = userGroups.map(ug => ug.group.name.toLowerCase());
+        const role = groupNames.includes('premium') ? 'PREMIUM' : (groupNames.includes('root') ? 'ADMIN' : 'TRIAL');
+
+        const token = await generateToken({
+            userId: user.id.toString(), // BigInt to string
+            authCode: user.username,
+            role: role,
+        })
+
+        const cookieStore = await cookies()
+        cookieStore.set('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 60 * 60 * 24, // 1 day
+            path: '/',
+        })
+
+        return NextResponse.json({
+            user: {
+                id: user.id.toString(),
+                authCode: user.username,
+                role: role,
+                createdAt: user.createdAt,
+            }
+        }, { status: 200 })
+    } catch (error) {
+        return handleApiError(error, 'Auth Login');
+    }
+}
