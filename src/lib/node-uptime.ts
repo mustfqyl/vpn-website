@@ -13,22 +13,25 @@ export class NodeUptimeService {
             const nodes = stats.nodes;
             const checkedAt = new Date();
             let loggedCount = 0;
-
-            for (const node of nodes) {
+            const logPromises = nodes.map(async (node) => {
                 try {
                     await prisma.nodeUptimeLog.create({
                         data: {
                             nodeName: node.name,
-                            status: node.status, // 'connected' | 'connecting' | 'error'
+                            status: node.status,
                             ping: node.ping ?? -1,
                             checkedAt
                         }
                     });
-                    loggedCount++;
+                    return true;
                 } catch (err) {
                     logger.error({ err, nodeName: node.name }, 'Failed to log node uptime');
+                    return false;
                 }
-            }
+            });
+
+            const results = await Promise.allSettled(logPromises);
+            loggedCount = results.filter(r => r.status === 'fulfilled' && r.value).length;
 
             // Cleanup: remove logs older than 35 days to prevent table bloat
             const cutoff = new Date();

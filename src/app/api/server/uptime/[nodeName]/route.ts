@@ -55,6 +55,9 @@ export async function GET(
 
         // Format for frontend
         const result = Object.entries(dailyStats).map(([date, stats]) => {
+            // Sort logs chronologically within each day defensively
+            stats.logs.sort((a, b) => new Date(a.checkedAt).getTime() - new Date(b.checkedAt).getTime());
+
             const isDown = stats.down > 0;
             const uptimePercent = stats.total > 0 ? ((stats.total - stats.down) / stats.total) : (stats.total === 0 ? 0 : 1);
             const avgPing = stats.pingCount > 0 ? Math.round(stats.pingSum / stats.pingCount) : -1;
