@@ -23,12 +23,12 @@ export async function GET(
                 }
             },
             orderBy: {
-                checkedAt: 'desc'
+                checkedAt: 'asc'
             }
         });
 
         // Group by day (YYYY-MM-DD)
-        const dailyStats: Record<string, { total: number; down: number; pingSum: number; pingCount: number; logs: any[] }> = {};
+        const dailyStats: Record<string, { total: number; down: number; pingSum: number; pingCount: number; logs: { status: string; checkedAt: Date; ping: number }[] }> = {};
 
         // Initialize last 30 days
         for (let i = 29; i >= 0; i--) {
