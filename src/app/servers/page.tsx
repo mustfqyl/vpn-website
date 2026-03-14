@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
+import { useState } from "react";
+import useSWR from "swr";
 import { ServerStatus } from "@/app/dashboard/components/ServerStatus";
 import { NodeDetailPopup } from "@/app/dashboard/components/NodeDetailPopup";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
-
 
 interface ServerNode {
     name: string;
@@ -37,26 +36,16 @@ interface ServerStatusData {
     };
 }
 
+const fetcher = (url: string) => fetch(url).then(res => res.json());
+
 export default function ServersPage() {
-    const [serverStatus, setServerStatus] = useState<ServerStatusData | null>(null);
+    const { data: serverStatus, isLoading } = useSWR<ServerStatusData>('/api/server/status', fetcher, {
+        refreshInterval: 2500,
+        revalidateOnFocus: true,
+    });
     const [selectedNode, setSelectedNode] = useState<ServerNode | null>(null);
-    const [loading, setLoading] = useState(true);
     const [filterStatus, setFilterStatus] = useState<'all' | 'connected' | 'offline'>('all');
     const [searchQuery, setSearchQuery] = useState('');
-
-    useEffect(() => {
-        const fetchData = () => {
-            fetch('/api/server/status', { cache: 'no-store' })
-                .then(r => r.json())
-                .then(data => setServerStatus(data))
-                .catch(console.error)
-                .finally(() => setLoading(false));
-        };
-
-        fetchData();
-        const intervalId = setInterval(fetchData, 2500);
-        return () => clearInterval(intervalId);
-    }, []);
 
     const filteredNodes = (serverStatus?.nodes ?? []).filter(n => {
         if (filterStatus === 'connected' && n.status !== 'connected') return false;
@@ -138,7 +127,7 @@ export default function ServersPage() {
                 )}
 
                 {/* Node List using the same ServerStatus component */}
-                {loading ? (
+                {isLoading ? (
                     <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
                         {[1, 2, 3].map(i => (
                             <div key={i} style={{ height: "68px", borderRadius: "10px", background: "var(--accent-soft)", animation: "pulse 2s infinite" }} />
@@ -167,6 +156,8 @@ export default function ServersPage() {
                     onClose={() => setSelectedNode(null)}
                 />
             )}
+
+            <Footer />
 
             <style jsx>{`
                 @keyframes pulse {

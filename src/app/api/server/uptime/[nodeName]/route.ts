@@ -11,138 +11,149 @@ export async function GET(
         const { nodeName } = await params;
         const decodedName = decodeURIComponent(nodeName);
 
-        // Fetch logs for the last 30 days with pagination
+        // 1. Find the node ID from the nodes table
+        const node = await prisma.node.findUnique({
+            where: { name: decodedName }
+        });
+
+        if (!node) {
+            return NextResponse.json({ error: 'Node not found' }, { status: 404 });
+        }
+
+        // 2. Fetch stats for the last 30 days
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-        const logs = await prisma.nodeUptimeLog.findMany({
+        const statsEntries = await prisma.nodeStats.findMany({
             where: {
-                nodeName: decodedName,
-                checkedAt: {
-                    gte: thirtyDaysAgo
-                }
+                nodeId: node.id,
+                createdAt: { gte: thirtyDaysAgo }
             },
-            orderBy: {
-                checkedAt: 'asc'
-            }
+            orderBy: { createdAt: 'asc' }
         });
 
-        // Group by day (YYYY-MM-DD)
-        const dailyStats: Record<string, { total: number; down: number; pingSum: number; pingCount: number; logs: { status: string; checkedAt: Date; ping: number }[] }> = {};
+        // 3. Group by day (YYYY-MM-DD)
+        const dailyStats: Record<string, { total: number; entries: { createdAt: Date; ping: number }[] }> = {};
 
         // Initialize last 30 days
         for (let i = 29; i >= 0; i--) {
             const d = new Date();
             d.setDate(d.getDate() - i);
             const dateStr = d.toISOString().split('T')[0];
-            dailyStats[dateStr] = { total: 0, down: 0, pingSum: 0, pingCount: 0, logs: [] };
+            dailyStats[dateStr] = { total: 0, entries: [] };
         }
 
-        for (const log of logs) {
-            const dateStr = new Date(log.checkedAt).toISOString().split('T')[0];
+        for (const entry of statsEntries) {
+            const dateStr = entry.createdAt.toISOString().split('T')[0];
             if (!dailyStats[dateStr]) continue;
-
-            dailyStats[dateStr].logs.push(log);
+            // Since node_stats doesn't have ping, we use -1 or a default if available elsewhere
+            // For now, let's assume ping is recorded in our NodeUptimeLog if we still want it, 
+            // but the user wants to use native data. Native data (node_stats) doesn't have ping.
+            // We'll use -1 for ping from native stats.
+            dailyStats[dateStr].entries.push({ createdAt: entry.createdAt, ping: -1 });
             dailyStats[dateStr].total += 1;
-            if (log.status !== 'connected') {
-                dailyStats[dateStr].down += 1;
-            }
-            if (log.ping >= 0) {
-                dailyStats[dateStr].pingSum += log.ping;
-                dailyStats[dateStr].pingCount += 1;
-            }
         }
 
-        // Format for frontend
-        const result = Object.entries(dailyStats).map(([date, stats]) => {
-            // Sort logs chronologically within each day defensively
-            stats.logs.sort((a, b) => new Date(a.checkedAt).getTime() - new Date(b.checkedAt).getTime());
-
-            const isDown = stats.down > 0;
-            const uptimePercent = stats.total > 0 ? ((stats.total - stats.down) / stats.total) : (stats.total === 0 ? 0 : 1);
-            const avgPing = stats.pingCount > 0 ? Math.round(stats.pingSum / stats.pingCount) : -1;
-
-            // Calculate segments (time spans of up/down)
+        // 4. Transform stats into segments/events based on gaps
+        const result = Object.entries(dailyStats).map(([date, dayData]) => {
+            const entries = dayData.entries;
             const segments: { start: number; end: number; status: 'up' | 'down' }[] = [];
             const downtimeEvents: { start: string; end: string | null; duration: string; isOngoing?: boolean }[] = [];
+            
+            const dayStart = new Date(date).getTime();
+            const GAP_THRESHOLD_MS = 90 * 1000; // 90 seconds (entries are every 25s, so 90s is safe for "down")
 
-            if (stats.logs.length > 0) {
-                let currentStatus = stats.logs[0].status === 'connected' ? 'up' : 'down';
-                let segmentStart = stats.logs[0].checkedAt;
-                let downtimeStart: Date | null = currentStatus === 'down' ? segmentStart : null;
+            let downCount = 0;
 
-                for (let i = 1; i < stats.logs.length; i++) {
-                    const log = stats.logs[i];
-                    const status = log.status === 'connected' ? 'up' : 'down';
 
-                    if (status !== currentStatus) {
-                        // End current segment
-                        const end = log.checkedAt;
-                        const dayStart = new Date(date).getTime();
+            if (entries.length > 0) {
+                let currentSegmentStart = entries[0].createdAt;
+
+
+                for (let i = 1; i < entries.length; i++) {
+                    const prev = entries[i - 1];
+                    const curr = entries[i];
+                    const gap = curr.createdAt.getTime() - prev.createdAt.getTime();
+
+                    if (gap > GAP_THRESHOLD_MS) {
+                        // There was a downtime between prev and curr
+                        // End current UP segment
                         segments.push({
-                            start: (new Date(segmentStart).getTime() - dayStart) / (24 * 60 * 60 * 1000),
-                            end: (new Date(end).getTime() - dayStart) / (24 * 60 * 60 * 1000),
-                            status: currentStatus as 'up' | 'down'
+                            start: (currentSegmentStart.getTime() - dayStart) / (24 * 60 * 60 * 1000),
+                            end: (prev.createdAt.getTime() - dayStart) / (24 * 60 * 60 * 1000),
+                            status: 'up'
                         });
 
-                        if (currentStatus === 'down' && downtimeStart) {
-                            const durationMs = new Date(end).getTime() - downtimeStart.getTime();
-                            const totalMins = Math.round(durationMs / 60000);
-                            const h = Math.floor(totalMins / 60);
-                            const m = totalMins % 60;
-                            const durationStr = h > 0 ? `${h}h ${m}m` : `${m}m`;
+                        // Add DOWN segment
+                        const downtimeStart = prev.createdAt;
+                        const downtimeEnd = curr.createdAt;
+                        segments.push({
+                            start: (downtimeStart.getTime() - dayStart) / (24 * 60 * 60 * 1000),
+                            end: (downtimeEnd.getTime() - dayStart) / (24 * 60 * 60 * 1000),
+                            status: 'down'
+                        });
 
-                            downtimeEvents.push({
-                                start: downtimeStart.toISOString(),
-                                end: new Date(end).toISOString(),
-                                duration: durationStr
-                            });
-                        }
+                        // Record downtime event
+                        const durationMs = gap;
+                        const totalMins = Math.round(durationMs / 60000);
+                        const h = Math.floor(totalMins / 60);
+                        const m = totalMins % 60;
+                        const durationStr = h > 0 ? `${h}h ${m}m` : `${m}m`;
+                        downCount += Math.floor(durationMs / 25000);
 
-                        currentStatus = status;
-                        segmentStart = log.checkedAt;
-                        downtimeStart = status === 'down' ? segmentStart : null;
+                        downtimeEvents.push({
+                            start: downtimeStart.toISOString(),
+                            end: downtimeEnd.toISOString(),
+                            duration: durationStr
+                        });
+
+                        // Start new UP segment
+                        currentSegmentStart = curr.createdAt;
                     }
                 }
 
-                // Close last segment
-                const lastLog = stats.logs[stats.logs.length - 1];
-                const dayStart = new Date(date).getTime();
-                const actualEnd = lastLog.checkedAt;
-
+                // Close last UP segment
+                const lastEntry = entries[entries.length - 1];
                 segments.push({
-                    start: (new Date(segmentStart).getTime() - dayStart) / (24 * 60 * 60 * 1000),
-                    end: (new Date(actualEnd).getTime() - dayStart) / (24 * 60 * 60 * 1000),
-                    status: currentStatus as 'up' | 'down'
+                    start: (currentSegmentStart.getTime() - dayStart) / (24 * 60 * 60 * 1000),
+                    end: (lastEntry.createdAt.getTime() - dayStart) / (24 * 60 * 60 * 1000),
+                    status: 'up'
                 });
 
-                if (currentStatus === 'down' && downtimeStart) {
-                    const durationMs = new Date(actualEnd).getTime() - downtimeStart.getTime();
+                // Check if ongoing (if latest entry is older than 2 mins)
+                const isToday = new Date().toISOString().split('T')[0] === date;
+                const timeSinceLastEntry = Date.now() - lastEntry.createdAt.getTime();
+                if (isToday && timeSinceLastEntry > GAP_THRESHOLD_MS) {
+                    const durationMs = timeSinceLastEntry;
                     const totalMins = Math.round(durationMs / 60000);
                     const h = Math.floor(totalMins / 60);
                     const m = totalMins % 60;
                     const durationStr = h > 0 ? `${h}h ${m}m` : `${m}m`;
 
-                    // Check if this is "ongoing" (latest log is down and from today)
-                    const isToday = new Date().toISOString().split('T')[0] === date;
-                    const isOngoing = isToday && (Date.now() - new Date(actualEnd).getTime() < 10 * 60 * 1000); // within last 10 mins
+                    segments.push({
+                        start: (lastEntry.createdAt.getTime() - dayStart) / (24 * 60 * 60 * 1000),
+                        end: (Date.now() - dayStart) / (24 * 60 * 60 * 1000),
+                        status: 'down'
+                    });
 
                     downtimeEvents.push({
-                        start: downtimeStart.toISOString(),
-                        end: isOngoing ? null : new Date(actualEnd).toISOString(),
+                        start: lastEntry.createdAt.toISOString(),
+                        end: null,
                         duration: durationStr,
-                        isOngoing
+                        isOngoing: true
                     });
                 }
             }
 
+            const uptimePercent = entries.length > 0 ? (entries.length / (entries.length + downCount)) : 0;
+
             return {
                 date,
                 uptimePercent,
-                isDown,
-                checks: stats.total,
-                downChecks: stats.down,
-                avgPing,
+                isDown: entries.length === 0 || (Date.now() - entries[entries.length - 1].createdAt.getTime() > GAP_THRESHOLD_MS),
+                checks: entries.length + downCount,
+                downChecks: downCount,
+                avgPing: -1, // Ping not available in node_stats
                 segments,
                 downtimeEvents
             };

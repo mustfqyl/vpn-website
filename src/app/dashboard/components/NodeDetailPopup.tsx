@@ -311,12 +311,6 @@ export const NodeDetailPopup = ({ node, onClose }: NodeDetailPopupProps) => {
                                         {(hoveredDay.checks === 0 ? 0 : hoveredDay.uptimePercent * 100).toFixed(1)}%
                                     </span>
                                 </div>
-                                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.7rem", color: "var(--foreground-muted)" }}>
-                                    <span>Avg Ping:</span>
-                                    <span style={{ color: hoveredDay.avgPing >= 0 ? "var(--success)" : "var(--foreground-muted)", fontWeight: 600 }}>
-                                        {hoveredDay.avgPing >= 0 ? `${hoveredDay.avgPing}ms` : '--'}
-                                    </span>
-                                </div>
 
                                         {hoveredDay.downtimeEvents && hoveredDay.downtimeEvents.length > 0 && (
                                             <div style={{ marginTop: '4px', borderTop: '1px dashed var(--card-border)', paddingTop: '4px' }}>

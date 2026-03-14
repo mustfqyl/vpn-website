@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { generateToken } from '@/lib/auth'
-import { vpnProvider } from '@/lib/vpn/factory'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { z } from 'zod'
 import { cookies } from 'next/headers'
 import { handleApiError, AppError } from '@/lib/api-error'
-import { VpnSyncService } from '@/lib/vpn/sync'
 import { getClientIp } from '@/lib/network'
 
 export const dynamic = 'force-dynamic'
@@ -44,7 +42,7 @@ export async function POST(request: Request) {
             where: { userId: user.id },
             include: { group: true }
         });
-        
+
         const groupNames = userGroups.map(ug => ug.group.name.toLowerCase());
         const role = groupNames.includes('premium') ? 'PREMIUM' : (groupNames.includes('root') ? 'ADMIN' : 'TRIAL');
 

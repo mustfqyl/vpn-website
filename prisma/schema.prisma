@@ -19,6 +19,7 @@ model VpnUser {
   groups      UsersGroupsAssociation[]
 
   @@map("users")
+  @@index([status])
 }
 
 model UsersGroupsAssociation {
@@ -40,15 +41,43 @@ model Group {
   @@map("groups")
 }
 
-model NodeUptimeLog {
-  id        BigInt   @id @default(autoincrement())
-  nodeName  String   @map("node_name")
-  status    String
-  ping      Int      @default(-1)
-  checkedAt DateTime @default(now()) @map("checked_at")
 
-  @@index([nodeName, checkedAt])
-  @@map("node_uptime_logs")
+model Node {
+  id          BigInt     @id @default(autoincrement())
+  name        String     @unique @db.VarChar(256)
+  address     String     @db.VarChar(256)
+  port        Int
+  status      NodeStatus
+  lastChange  DateTime?  @map("last_status_change") @db.Timestamptz(6)
+  createdAt   DateTime   @map("created_at") @db.Timestamptz(6)
+
+  @@map("nodes")
+}
+
+model NodeStats {
+  id        BigInt   @id @default(autoincrement())
+  createdAt DateTime @map("created_at") @db.Timestamptz(6)
+  nodeId    BigInt   @map("node_id")
+  memTotal  BigInt   @map("mem_total")
+  memUsed   BigInt   @map("mem_used")
+  cpuCores  Int      @map("cpu_cores")
+  cpuUsage  Float    @map("cpu_usage")
+  inSpeed   BigInt   @map("incoming_bandwidth_speed")
+  outSpeed  BigInt   @map("outgoing_bandwidth_speed")
+
+  @@map("node_stats")
+  @@index([nodeId])
+  @@index([createdAt])
+}
+
+enum NodeStatus {
+  connected
+  connecting
+  error
+  disabled
+  limited
+
+  @@map("nodestatus")
 }
 
 model AppState {

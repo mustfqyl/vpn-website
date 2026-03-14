@@ -33,47 +33,47 @@ export async function GET() {
         const stats = await vpnProvider.getStats();
         const liveNodes = stats.nodes;
 
-        // For each node, compute 30-day uptime from our DB logs
+        // For each node, compute 30-day uptime from native node_stats
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-        const uptimeLogs = await (prisma as any).nodeUptimeLog.groupBy({
-            by: ['nodeName'],
-            where: { checkedAt: { gte: thirtyDaysAgo } },
+        // Map node names to IDs first to match stats
+        const dbNodes = await prisma.node.findMany({
+            select: { id: true, name: true }
+        });
+        const nameToId: Record<string, string> = {};
+        for (const row of dbNodes) { nameToId[row.name] = row.id.toString(); }
+
+        const statsCounts = await prisma.nodeStats.groupBy({
+            by: ['nodeId'],
+            where: { createdAt: { gte: thirtyDaysAgo } },
             _count: { id: true },
         });
 
-        const uptimeConnected = await (prisma as any).nodeUptimeLog.groupBy({
-            by: ['nodeName'],
-            where: {
-                checkedAt: { gte: thirtyDaysAgo },
-                status: 'connected'
-            },
-            _count: { id: true },
-        });
+        const uptimeMap: Record<string, number> = {};
+        const totalPossibleChecks = (30 * 24 * 60 * 60) / 25; // 30 days in 25s intervals
 
-        // Build uptime map
-        const totalMap: Record<string, number> = {};
-        const connectedMap: Record<string, number> = {};
-        for (const row of uptimeLogs) { totalMap[row.nodeName] = row._count.id; }
-        for (const row of uptimeConnected) { connectedMap[row.nodeName] = row._count.id; }
-
-        // Get latest ping per node
-        const latestPings = await (prisma as any).nodeUptimeLog.findMany({
-            where: { checkedAt: { gte: thirtyDaysAgo } },
-            orderBy: { checkedAt: 'desc' },
-            distinct: ['nodeName'],
-            select: { nodeName: true, ping: true, checkedAt: true }
-        });
-        const pingMap: Record<string, { ping: number; lastChecked: string }> = {};
-        for (const row of latestPings) {
-            pingMap[row.nodeName] = { ping: row.ping, lastChecked: row.checkedAt.toISOString() };
+        for (const row of statsCounts) {
+            const count = row._count.id;
+            const uptime = Math.min(100, Math.round((count / totalPossibleChecks) * 1000) / 10);
+            uptimeMap[row.nodeId.toString()] = uptime;
         }
 
-        const nodes = liveNodes.map((n: any) => {
-            const total = totalMap[n.name] || 0;
-            const connected = connectedMap[n.name] || 0;
-            const uptime30d = total > 0 ? Math.round((connected / total) * 1000) / 10 : null;
+        // Get latest check info
+        const latestStats = await prisma.nodeStats.findMany({
+            where: { createdAt: { gte: thirtyDaysAgo } },
+            orderBy: { createdAt: 'desc' },
+            distinct: ['nodeId'],
+            select: { nodeId: true, createdAt: true }
+        });
+        const lastSeenMap: Record<string, string> = {};
+        for (const row of latestStats) {
+            lastSeenMap[row.nodeId.toString()] = row.createdAt.toISOString();
+        }
+
+        const nodes = liveNodes.map((n) => {
+            const nodeId = nameToId[n.name];
+            const uptime30d = nodeId ? (uptimeMap[nodeId] ?? null) : null;
             const countryCode = guessCountryFromName(n.name);
 
             return {
@@ -83,8 +83,8 @@ export async function GET() {
                 status: n.status, // 'connected' | 'connecting' | 'error'
                 countryCode,
                 country: countryNames[countryCode] ?? countryCode,
-                ping: pingMap[n.name]?.ping ?? n.ping ?? -1,
-                lastChecked: pingMap[n.name]?.lastChecked ?? null,
+                ping: n.ping ?? -1, // Use live ping from provider if available
+                lastChecked: nodeId ? (lastSeenMap[nodeId] ?? null) : null,
                 uplinkGB: n.uplinkGB,
                 downlinkGB: n.downlinkGB,
                 xrayVersion: n.xrayVersion,

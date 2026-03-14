@@ -111,7 +111,15 @@ export default function RegisterPage() {
             const data = await res.json();
 
             if (!res.ok) {
-                throw new Error(data.error || "Registration failed");
+                if (res.status === 400) {
+                   setError("Invalid parameters. Please check your data and try again.");
+                } else if (res.status === 409) {
+                   setError("This access code has already been registered.");
+                } else {
+                   setError(data.error || "An unexpected error occurred during registration. Please try again later.");
+                }
+                setLoading(false);
+                return;
             }
 
             if (formData.plan === 'Premium') {
@@ -132,7 +140,9 @@ export default function RegisterPage() {
 
             <header style={{
                 position: "fixed", top: 0, left: 0, right: 0, zIndex: 50,
-                backgroundColor: "var(--background-glass)", backdropFilter: "blur(40px)",
+                backgroundColor: "var(--background-glass)", 
+                WebkitBackdropFilter: "blur(40px)",
+                backdropFilter: "blur(40px)",
                 borderBottom: "1px solid var(--card-border)"
             }}>
                 <div className="container" style={{
@@ -170,10 +180,20 @@ export default function RegisterPage() {
 
                         {error && (
                             <div style={{
-                                padding: "1rem", borderRadius: "10px", background: "rgba(239, 68, 68, 0.05)",
-                                border: "1px solid var(--error)", color: "var(--error)", fontSize: "0.875rem",
-                                marginBottom: "2rem", textAlign: "center"
+                                padding: "1rem 1.25rem",
+                                borderRadius: "12px",
+                                background: "rgba(239, 68, 68, 0.08)",
+                                border: "1px solid var(--error-soft)",
+                                color: "var(--error)",
+                                fontSize: "0.875rem",
+                                marginBottom: "2rem",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "0.75rem",
+                                fontWeight: 500,
+                                animation: "shake 0.5s cubic-bezier(.36,.07,.19,.97) both"
                             }}>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                                 {error}
                             </div>
                         )}

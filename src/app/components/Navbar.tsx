@@ -20,7 +20,6 @@ export default function Navbar() {
   const [mobileDownloadsOpen, setMobileDownloadsOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
-  const { theme } = useTheme();
 
   useEffect(() => {
     fetch('/api/user/me', { credentials: 'include' })
@@ -76,6 +75,7 @@ export default function Navbar() {
       right: 0,
       zIndex: 100,
       backgroundColor: "var(--background-glass)",
+      WebkitBackdropFilter: "blur(40px)",
       backdropFilter: "blur(40px)",
       borderBottom: "1px solid var(--card-border)",
       transition: "all 0.3s ease"
@@ -171,6 +171,7 @@ export default function Navbar() {
           left: 0,
           right: 0,
           background: "var(--background-glass)",
+          WebkitBackdropFilter: "blur(60px)",
           backdropFilter: "blur(60px)",
           borderBottom: "1px solid var(--card-border)",
           padding: "1.5rem",
@@ -209,9 +210,8 @@ export default function Navbar() {
                 color: "var(--foreground)",
                 fontSize: "1.125rem",
                 fontWeight: 600,
-                textTransform: "uppercase",
                 letterSpacing: "0.05em",
-                display: "flex",
+              display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
                 cursor: "pointer"

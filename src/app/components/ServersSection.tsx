@@ -42,8 +42,8 @@ export function ServersSection() {
             const data = await res.json();
             setNodes(data.nodes || []);
             setUpdatedAt(data.updatedAt);
-        } catch (e: any) {
-            setError(e.message);
+        } catch (e: unknown) {
+            setError(e instanceof Error ? e.message : 'An unknown error occurred');
         } finally {
             setLoading(false);
         }
@@ -128,7 +128,7 @@ export function ServersSection() {
                     {/* Status filter */}
                     <select
                         value={filterStatus}
-                        onChange={e => setFilterStatus(e.target.value as any)}
+                        onChange={e => setFilterStatus(e.target.value as 'all' | 'connected' | 'error')}
                         style={{
                             padding: "0.5rem 1rem", borderRadius: "8px", border: "1px solid var(--card-border)",
                             background: "var(--background-secondary)", color: "var(--foreground)", fontSize: "0.8125rem"
@@ -252,6 +252,7 @@ export function ServersSection() {
                         onClick={() => setSelectedNode(null)}
                         style={{
                             position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)",
+                            WebkitBackdropFilter: "blur(12px)",
                             backdropFilter: "blur(12px)", display: "grid", placeItems: "center",
                             zIndex: 200, padding: "1rem"
                         }}
@@ -269,6 +270,7 @@ export function ServersSection() {
                             {/* Modal Header */}
                             <div style={{
                                 position: "sticky", top: 0, background: "var(--background-glass)",
+                                WebkitBackdropFilter: "blur(16px)",
                                 backdropFilter: "blur(16px)", padding: "1.25rem 1.5rem",
                                 borderBottom: "1px solid var(--card-border)",
                                 display: "flex", justifyContent: "space-between", alignItems: "center"

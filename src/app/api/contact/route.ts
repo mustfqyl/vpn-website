@@ -1,13 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/lib/logger';
-import { siteConfig } from '@/lib/siteConfig';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 /**
  * POST /api/contact
- * Handles contact form submissions
+ * Handles contact form submissions with rate limiting
  */
 export async function POST(request: NextRequest) {
     try {
+        const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
+        const isRateLimited = !(await checkRateLimit(ip, 5, 60 * 1000)); // 5 requests per minute
+
+        if (isRateLimited) {
+            return NextResponse.json(
+                { error: 'Too many requests. Please try again after a minute.' },
+                { status: 429 }
+            );
+        }
+
         const body = await request.json();
         const { email, type, message } = body;
 
