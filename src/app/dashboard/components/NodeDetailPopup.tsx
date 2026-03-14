@@ -19,10 +19,28 @@ interface NodeDetailPopupProps {
     onClose: () => void;
 }
 
+interface DowntimeEvent {
+    start: string;
+    end: string | null;
+    duration: string;
+    isOngoing?: boolean;
+}
+
+interface UptimeDay {
+    date: string;
+    uptimePercent: number;
+    avgPing: number;
+    checks: number;
+    downChecks: number;
+    isDown: boolean;
+    segments: { start: number; end: number; status: 'up' | 'down' }[];
+    downtimeEvents: DowntimeEvent[];
+}
+
 export const NodeDetailPopup = ({ node, onClose }: NodeDetailPopupProps) => {
     const [liveSpeed, setLiveSpeed] = useState<{ upSpeed: number; downSpeed: number } | null>(null);
-    const [uptimeHistory, setUptimeHistory] = useState<any[]>([]);
-    const [hoveredDay, setHoveredDay] = useState<any | null>(null);
+    const [uptimeHistory, setUptimeHistory] = useState<UptimeDay[]>([]);
+    const [hoveredDay, setHoveredDay] = useState<UptimeDay | null>(null);
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
     useEffect(() => {
@@ -50,7 +68,7 @@ export const NodeDetailPopup = ({ node, onClose }: NodeDetailPopupProps) => {
                 try {
                     const data = JSON.parse(event.data);
                     setLiveSpeed(data);
-                } catch (e) {
+                } catch {
                     // console.error("Failed to parse live speed data", e);
                 }
             };
@@ -204,7 +222,7 @@ export const NodeDetailPopup = ({ node, onClose }: NodeDetailPopupProps) => {
                                 // Build gradient from segments
                                 let gradient = "";
                                 if (day.segments && day.segments.length > 0) {
-                                    const stops = day.segments.map((seg: any) => {
+                                    const stops = day.segments.map((seg) => {
                                         const color = healthColor;
                                         return `${color} ${seg.start * 100}%, ${color} ${seg.end * 100}%`;
                                     });
@@ -241,9 +259,9 @@ export const NodeDetailPopup = ({ node, onClose }: NodeDetailPopupProps) => {
                                             borderRadius: "2px",
                                             opacity: day.checks === 0 ? 0.2 : 0.8,
                                             transition: "all 0.2s ease, height 1s ease-out",
-                                            // @ts-ignore
+                                            // @ts-expect-error - Custom CSS property
                                             '--target-height': `${heightPercent}%`
-                                        } as any}
+                                        }}
                                             ref={(el) => {
                                                 if (el) setTimeout(() => el.style.height = `${heightPercent}%`, 50 + idx * 20);
                                             }}
@@ -300,17 +318,23 @@ export const NodeDetailPopup = ({ node, onClose }: NodeDetailPopupProps) => {
                                     </span>
                                 </div>
 
-                                {hoveredDay.downtimeEvents && hoveredDay.downtimeEvents.length > 0 && (
-                                    <div style={{ marginTop: '4px', borderTop: '1px dashed var(--card-border)', paddingTop: '4px' }}>
-                                        <div style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--error)', marginBottom: '2px' }}>Downtime Periods:</div>
-                                        {hoveredDay.downtimeEvents.map((ev: any, i: number) => (
-                                            <div key={i} style={{ fontSize: '0.6rem', display: 'flex', justifyContent: 'space-between', color: 'var(--foreground)' }}>
-                                                <span>{ev.start} - {ev.end}</span>
-                                                <span style={{ opacity: 0.7 }}>({ev.duration})</span>
+                                        {hoveredDay.downtimeEvents && hoveredDay.downtimeEvents.length > 0 && (
+                                            <div style={{ marginTop: '4px', borderTop: '1px dashed var(--card-border)', paddingTop: '4px' }}>
+                                                <div style={{ fontSize: '0.6rem', fontWeight: 700, color: 'var(--error)', marginBottom: '2px' }}>Downtime Periods:</div>
+                                                {hoveredDay.downtimeEvents.map((ev, i) => {
+                                                    const formatTime = (iso: string | null) => {
+                                                        if (!iso) return "Now";
+                                                        return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+                                                    };
+                                                    return (
+                                                        <div key={i} style={{ fontSize: '0.6rem', display: 'flex', justifyContent: 'space-between', color: 'var(--foreground)' }}>
+                                                            <span>{formatTime(ev.start)} - {formatTime(ev.end)}</span>
+                                                            <span style={{ opacity: 0.7 }}>({ev.duration})</span>
+                                                        </div>
+                                                    );
+                                                })}
                                             </div>
-                                        ))}
-                                    </div>
-                                )}
+                                        )}
 
                                 <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.6rem", color: "var(--foreground-muted)", borderTop: '1px solid var(--card-border)', paddingTop: '4px', marginTop: '2px' }}>
                                     <span>Checks:</span>

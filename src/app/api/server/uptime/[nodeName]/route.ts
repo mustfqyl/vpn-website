@@ -64,7 +64,7 @@ export async function GET(
 
             // Calculate segments (time spans of up/down)
             const segments: { start: number; end: number; status: 'up' | 'down' }[] = [];
-            const downtimeEvents: { start: string; end: string; duration: string }[] = [];
+            const downtimeEvents: { start: string; end: string | null; duration: string; isOngoing?: boolean }[] = [];
 
             if (stats.logs.length > 0) {
                 let currentStatus = stats.logs[0].status === 'connected' ? 'up' : 'down';
@@ -93,8 +93,8 @@ export async function GET(
                             const durationStr = h > 0 ? `${h}h ${m}m` : `${m}m`;
 
                             downtimeEvents.push({
-                                start: downtimeStart.toLocaleTimeString('en-US', { timeZone: 'UTC', hour12: false, hour: '2-digit', minute: '2-digit' }),
-                                end: new Date(end).toLocaleTimeString('en-US', { timeZone: 'UTC', hour12: false, hour: '2-digit', minute: '2-digit' }),
+                                start: downtimeStart.toISOString(),
+                                end: new Date(end).toISOString(),
                                 duration: durationStr
                             });
                         }
@@ -123,10 +123,15 @@ export async function GET(
                     const m = totalMins % 60;
                     const durationStr = h > 0 ? `${h}h ${m}m` : `${m}m`;
 
+                    // Check if this is "ongoing" (latest log is down and from today)
+                    const isToday = new Date().toISOString().split('T')[0] === date;
+                    const isOngoing = isToday && (Date.now() - new Date(actualEnd).getTime() < 10 * 60 * 1000); // within last 10 mins
+
                     downtimeEvents.push({
-                        start: downtimeStart.toLocaleTimeString('en-US', { timeZone: 'UTC', hour12: false, hour: '2-digit', minute: '2-digit' }),
-                        end: new Date(actualEnd).toLocaleTimeString('en-US', { timeZone: 'UTC', hour12: false, hour: '2-digit', minute: '2-digit' }),
-                        duration: durationStr
+                        start: downtimeStart.toISOString(),
+                        end: isOngoing ? null : new Date(actualEnd).toISOString(),
+                        duration: durationStr,
+                        isOngoing
                     });
                 }
             }
