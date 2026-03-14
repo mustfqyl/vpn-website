@@ -1,0 +1,15 @@
+name: Uptime Pinger
+
+on:
+  schedule:
+    - cron: '*/1 * * * *' # Every minute
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Node Uptime API
+        run: |
+          curl -X GET "${{ secrets.NEXT_PUBLIC_APP_URL }}/api/cron/node-ping" \
+          -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
