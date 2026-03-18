@@ -1,0 +1,88 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model VpnUser {
+  id          BigInt    @id
+  username    String    @unique
+  status      String
+  usedTraffic BigInt    @map("used_traffic")
+  dataLimit   BigInt?   @map("data_limit")
+  expire      DateTime?
+  createdAt   DateTime  @map("created_at")
+  groups      UsersGroupsAssociation[]
+
+  @@map("users")
+  @@index([status])
+}
+
+model UsersGroupsAssociation {
+  userId   BigInt  @map("user_id")
+  groupsId BigInt  @map("groups_id")
+  user     VpnUser @relation(fields: [userId], references: [id])
+  group    Group   @relation(fields: [groupsId], references: [id])
+
+  @@id([userId, groupsId])
+  @@map("users_groups_association")
+}
+
+model Group {
+  id         BigInt   @id
+  name       String
+  isDisabled Boolean  @map("is_disabled")
+  users      UsersGroupsAssociation[]
+
+  @@map("groups")
+}
+
+
+model Node {
+  id          BigInt     @id @default(autoincrement())
+  name        String     @unique @db.VarChar(256)
+  address     String     @db.VarChar(256)
+  port        Int
+  status      NodeStatus
+  lastChange  DateTime?  @map("last_status_change") @db.Timestamptz(6)
+  createdAt   DateTime   @map("created_at") @db.Timestamptz(6)
+
+  @@map("nodes")
+}
+
+model NodeStats {
+  id        BigInt   @id @default(autoincrement())
+  createdAt DateTime @map("created_at") @db.Timestamptz(6)
+  nodeId    BigInt   @map("node_id")
+  memTotal  BigInt   @map("mem_total")
+  memUsed   BigInt   @map("mem_used")
+  cpuCores  Int      @map("cpu_cores")
+  cpuUsage  Float    @map("cpu_usage")
+  inSpeed   BigInt   @map("incoming_bandwidth_speed")
+  outSpeed  BigInt   @map("outgoing_bandwidth_speed")
+
+  @@map("node_stats")
+  @@index([nodeId])
+  @@index([createdAt])
+}
+
+enum NodeStatus {
+  connected
+  connecting
+  error
+  disabled
+  limited
+
+  @@map("nodestatus")
+}
+
+model AppState {
+  key   String @id
+  value String
+
+  @@map("app_state")
+}
