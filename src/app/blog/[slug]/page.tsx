@@ -7,7 +7,7 @@ import { notFound } from "next/navigation";
 import { useTheme } from "@/context/ThemeContext";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import Navbar from "@/app/components/NavbarWrapper";
+import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 
 
