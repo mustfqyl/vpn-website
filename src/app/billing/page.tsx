@@ -12,6 +12,12 @@ interface UserData {
 }
 
 export default function BillingPage() {
+    const [isLoggedIn, setIsLoggedIn] = useState(() => {
+        if (typeof window !== "undefined") {
+            return document.cookie.split(";").some((c) => c.trim().startsWith("auth_status=1"));
+        }
+        return false;
+    });
     const [user, setUser] = useState<UserData | null>(null);
     const [loading, setLoading] = useState(true);
     const [initiating, setInitiating] = useState<number | null>(null);
@@ -135,7 +141,7 @@ export default function BillingPage() {
             <div className="bg-glow" />
 
 
-            <Navbar hideLinks />
+            <Navbar hideLinks isLoggedIn={isLoggedIn} isAuthLoading={loading} />
 
             <main className="container" style={{ paddingTop: "calc(64px + 3rem)", paddingBottom: "var(--container-padding)", paddingLeft: "var(--container-padding)", paddingRight: "var(--container-padding)" }}>
                 <div style={{ maxWidth: "850px", margin: "0 auto" }} className="animate-fadeUp">

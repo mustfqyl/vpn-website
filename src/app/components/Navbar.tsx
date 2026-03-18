@@ -11,9 +11,10 @@ import { Menu, X, Shield } from "lucide-react";
 interface NavbarProps {
   hideLinks?: boolean;
   isLoggedIn?: boolean;
+  isAuthLoading?: boolean;
 }
 
-export default function Navbar({ hideLinks = false, isLoggedIn: initialIsLoggedIn }: NavbarProps) {
+export default function Navbar({ hideLinks = false, isLoggedIn: initialIsLoggedIn, isAuthLoading = false }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     if (initialIsLoggedIn !== undefined) return initialIsLoggedIn;
@@ -143,14 +144,16 @@ export default function Navbar({ hideLinks = false, isLoggedIn: initialIsLoggedI
             <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexShrink: 0 }}>
 
               {/* Desktop buttons */}
-              <div className="desktop-only" style={{ display: "flex", alignItems: "center", gap: "0.75rem", minWidth: "180px", justifyContent: "flex-end" }}>
+              <div className="desktop-only" style={{ display: "flex", alignItems: "center", gap: "0.75rem", minWidth: "140px", justifyContent: "flex-end" }}>
                 {hideLinks && (
                   <>
                     <ThemeSwitcher />
                     <Divider />
                   </>
                 )}
-                {isLoggedIn ? (
+                {isAuthLoading && !isLoggedIn ? (
+                  <div style={{ width: "100px", height: "32px", background: "var(--card-border)", borderRadius: "100px", animation: "pulse 2s infinite", opacity: 0.5 }} />
+                ) : isLoggedIn ? (
                   pathname === "/dashboard" ? (
                     <button
                       onClick={() => setIsProfileOpen(true)}
@@ -188,6 +191,9 @@ export default function Navbar({ hideLinks = false, isLoggedIn: initialIsLoggedI
               {/* Mobile buttons */}
               <div className="mobile-only" style={{ display: "flex", alignItems: "center", gap: "0.75rem", minWidth: "54px", justifyContent: "flex-end" }}>
                 {hideLinks && <ThemeSwitcher />}
+                {isAuthLoading && !isLoggedIn && (
+                  <div style={{ width: "32px", height: "32px", background: "var(--card-border)", borderRadius: "50%", animation: "pulse 2s infinite", opacity: 0.5 }} />
+                )}
                 {isLoggedIn && (
                   <>
                     <Divider />

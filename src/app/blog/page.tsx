@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import { BLOG_POSTS } from "@/data/blog-posts";
 import { useTheme } from "@/context/ThemeContext";
 import Navbar from "@/app/components/Navbar";
@@ -9,13 +10,33 @@ import Footer from "@/app/components/Footer";
 
 
 export default function BlogIndexPage() {
+    const [isLoggedIn, setIsLoggedIn] = useState(() => {
+        if (typeof window !== "undefined") {
+            return document.cookie.split(";").some((c) => c.trim().startsWith("auth_status=1"));
+        }
+        return false;
+    });
+    const [isAuthLoading, setIsAuthLoading] = useState(true);
+
+    useEffect(() => {
+        fetch("/api/user/me", { credentials: "include" })
+            .then((res) => {
+                if (res.ok) {
+                    setIsLoggedIn(true);
+                } else {
+                    setIsLoggedIn(false);
+                }
+            })
+            .catch(() => { /* Silent failure */ })
+            .finally(() => setIsAuthLoading(false));
+    }, []);
 
 
     return (
         <div style={{ minHeight: "100vh", position: "relative" }}>
             <div className="bg-glow" />
 
-            <Navbar />
+            <Navbar isLoggedIn={isLoggedIn} isAuthLoading={isAuthLoading} />
 
             {/* Hero Section */}
             <section style={{ padding: "calc(var(--header-height) + 40px) 1.5rem 60px", textAlign: "center" }}>

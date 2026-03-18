@@ -19,6 +19,26 @@ import Footer from "@/app/components/Footer";
 import { copyToClipboard } from "@/lib/clipboard";
 
 export default function DownloadPage() {
+    const [isLoggedIn, setIsLoggedIn] = useState(() => {
+        if (typeof window !== "undefined") {
+            return document.cookie.split(";").some((c) => c.trim().startsWith("auth_status=1"));
+        }
+        return false;
+    });
+    const [isAuthLoading, setIsAuthLoading] = useState(true);
+
+    useEffect(() => {
+        fetch("/api/user/me", { credentials: "include" })
+            .then((res) => {
+                if (res.ok) {
+                    setIsLoggedIn(true);
+                } else {
+                    setIsLoggedIn(false);
+                }
+            })
+            .catch(() => { /* Silent failure */ })
+            .finally(() => setIsAuthLoading(false));
+    }, []);
   const [copied, setCopied] = useState(false);
   const { theme } = useTheme();
 
@@ -70,7 +90,7 @@ export default function DownloadPage() {
 
   return (
     <div className="min-h-screen" style={{ background: "var(--background)", color: "var(--foreground)" }}>
-      <Navbar />
+      <Navbar isLoggedIn={isLoggedIn} isAuthLoading={isAuthLoading} />
 
       <main className="pt-mobile-hero" style={{ paddingTop: "calc(var(--header-height) + 40px)", paddingBottom: "100px" }}>
         <div className="container" style={{ maxWidth: "800px" }}>

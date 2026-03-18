@@ -10,7 +10,12 @@ import Protocols from "@/app/components/landing/Protocols";
 import Pricing from "@/app/components/landing/Pricing";
 
 export default function HomePage() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    if (typeof window !== "undefined") {
+      return document.cookie.split(";").some((c) => c.trim().startsWith("auth_status=1"));
+    }
+    return false;
+  });
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [nodeStats, setNodeStats] = useState<{ total: number; active: number } | null>(null);
 
@@ -62,7 +67,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen no-select">
-      <Navbar isLoggedIn={isLoggedIn} />
+      <Navbar isLoggedIn={isLoggedIn} isAuthLoading={isAuthLoading} />
 
       <Hero
         isLoggedIn={isLoggedIn}

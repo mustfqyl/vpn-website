@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import useSWR from "swr";
 import { ServerStatus } from "@/app/dashboard/components/ServerStatus";
 import { NodeDetailPopup } from "@/app/dashboard/components/NodeDetailPopup";
@@ -39,6 +39,26 @@ interface ServerStatusData {
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
 export default function ServersPage() {
+    const [isLoggedIn, setIsLoggedIn] = useState(() => {
+        if (typeof window !== "undefined") {
+            return document.cookie.split(";").some((c) => c.trim().startsWith("auth_status=1"));
+        }
+        return false;
+    });
+    const [isAuthLoading, setIsAuthLoading] = useState(true);
+
+    useEffect(() => {
+        fetch("/api/user/me", { credentials: "include" })
+            .then((res) => {
+                if (res.ok) {
+                    setIsLoggedIn(true);
+                } else {
+                    setIsLoggedIn(false);
+                }
+            })
+            .catch(() => { /* Silent failure */ })
+            .finally(() => setIsAuthLoading(false));
+    }, []);
     const { data: serverStatus, isLoading } = useSWR<ServerStatusData>('/api/server/status', fetcher, {
         refreshInterval: 2500,
         revalidateOnFocus: true,
@@ -58,7 +78,7 @@ export default function ServersPage() {
 
     return (
         <div style={{ minHeight: "100vh", background: "var(--background)" }}>
-            <Navbar />
+            <Navbar isLoggedIn={isLoggedIn} isAuthLoading={isAuthLoading} />
 
             <div style={{ maxWidth: "900px", margin: "0 auto", padding: "calc(var(--header-height) + 2rem) var(--container-padding) 2rem" }}>
                 {/* Filters */}

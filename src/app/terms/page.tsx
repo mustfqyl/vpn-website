@@ -1,12 +1,35 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { siteConfig } from "@/lib/siteConfig";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 
 export default function TermsPage() {
+    const [isLoggedIn, setIsLoggedIn] = useState(() => {
+        if (typeof window !== "undefined") {
+            return document.cookie.split(";").some((c) => c.trim().startsWith("auth_status=1"));
+        }
+        return false;
+    });
+    const [isAuthLoading, setIsAuthLoading] = useState(true);
+
+    useEffect(() => {
+        fetch("/api/user/me", { credentials: "include" })
+            .then((res) => {
+                if (res.ok) {
+                    setIsLoggedIn(true);
+                } else {
+                    setIsLoggedIn(false);
+                }
+            })
+            .catch(() => { /* Silent failure */ })
+            .finally(() => setIsAuthLoading(false));
+    }, []);
     return (
         <div style={{ minHeight: "100vh" }}>
-            <Navbar />
+            <Navbar isLoggedIn={isLoggedIn} isAuthLoading={isAuthLoading} />
 
             {/* Content */}
             <main style={{ maxWidth: "700px", margin: "0 auto", padding: "calc(var(--header-height) + 40px) 1.5rem 4rem" }}>
