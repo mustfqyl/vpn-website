@@ -62,7 +62,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen no-select">
-      <Navbar />
+      <Navbar isLoggedIn={isLoggedIn} />
 
       <Hero
         isLoggedIn={isLoggedIn}

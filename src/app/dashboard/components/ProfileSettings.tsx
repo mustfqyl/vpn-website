@@ -1,7 +1,7 @@
 "use client";
-
 import { useState } from "react";
 import { copyToClipboard } from "@/lib/clipboard";
+import { X, LogOut, Shield, Download, Copy, Trash2, ExternalLink, Calendar } from "lucide-react";
 
 interface UserData {
     authCode: string;
@@ -20,6 +20,7 @@ export const ProfileSettings = ({ user, isOpen, onClose }: ProfileSettingsProps)
     const [deleteConfirmation, setDeleteConfirmation] = useState("");
     const [isDeleting, setIsDeleting] = useState(false);
     const [copiedSettings, setCopiedSettings] = useState(false);
+    const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
     const downloadCode = () => {
         const element = document.createElement("a");
@@ -32,8 +33,6 @@ export const ProfileSettings = ({ user, isOpen, onClose }: ProfileSettingsProps)
     };
 
     const handleDeleteAccount = async () => {
-        if (deleteConfirmation !== "DELETE MY ACCOUNT") return;
-
         setIsDeleting(true);
         try {
             const res = await fetch("/api/user/me", { method: "DELETE" });
@@ -42,11 +41,13 @@ export const ProfileSettings = ({ user, isOpen, onClose }: ProfileSettingsProps)
             } else {
                 alert("An error occurred while deleting the account.");
                 setIsDeleting(false);
+                setShowConfirmDelete(false);
             }
         } catch (error) {
             console.error(error);
             alert("An error occurred while deleting the account.");
             setIsDeleting(false);
+            setShowConfirmDelete(false);
         }
     };
 
@@ -55,167 +56,181 @@ export const ProfileSettings = ({ user, isOpen, onClose }: ProfileSettingsProps)
     return (
         <div onClick={onClose} style={{
             position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-            background: "rgba(0,0,0,0.6)",
-            backdropFilter: "blur(8px)",
+            background: "rgba(0,0,0,0.5)",
+            backdropFilter: "blur(4px)",
             display: "grid", placeItems: "center",
-            zIndex: 100,
-            animation: "fadeIn 0.2s ease",
+            zIndex: 1000,
             padding: "1rem"
         }}>
             <div onClick={(e) => e.stopPropagation()} style={{
                 background: "var(--background)",
                 border: "1px solid var(--card-border)",
-                borderRadius: "16px",
+                borderRadius: "24px",
                 width: "100%",
-                maxWidth: "480px",
-                maxHeight: "90vh",
-                overflowY: "auto",
+                maxWidth: "380px",
+                overflow: "hidden",
+                boxShadow: "0 20px 50px rgba(0,0,0,0.3)",
+                display: "flex",
+                flexDirection: "column",
                 animation: "fadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
-                boxShadow: "0 20px 40px rgba(0,0,0,0.2)"
+                position: "relative"
             }}>
-                {/* Header */}
+                
+                {/* Formal Deletion Popup Overlay */}
+                {showConfirmDelete && (
+                    <div style={{
+                        position: "absolute", inset: 0, zIndex: 100,
+                        background: "var(--background)", display: "flex", flexDirection: "column",
+                        padding: "1.5rem", animation: "fadeIn 0.2s ease"
+                    }}>
+                        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", gap: "1rem" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", color: "var(--error)" }}>
+                                <Trash2 size={24} />
+                                <h3 style={{ fontSize: "1rem", fontWeight: 800 }}>FINAL WARNING</h3>
+                            </div>
+                            <div style={{ 
+                                padding: "1rem", borderRadius: "12px", background: "rgba(239, 68, 68, 0.05)",
+                                border: "1px solid rgba(239, 68, 68, 0.1)", fontSize: "0.75rem", color: "var(--foreground)",
+                                lineHeight: "1.6", fontWeight: 500
+                            }}>
+                                <p style={{ marginBottom: "0.75rem" }}><strong>THIS ACTION IS IRREVERSIBLE.</strong></p>
+                                <p>By proceeding, you acknowledge that all remaining subscription time and node access will be <strong>PERMANENTLY FORFEITED</strong> without any possibility of refund or recovery.</p>
+                                <p style={{ marginTop: "0.75rem" }}>SecureVPN assumes no responsibility for data loss or service termination resulting from this action.</p>
+                            </div>
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                            <button 
+                                onClick={handleDeleteAccount}
+                                disabled={isDeleting}
+                                style={{
+                                    width: "100%", padding: "0.85rem", borderRadius: "12px",
+                                    background: "var(--error)", color: "white", border: "none",
+                                    fontSize: "0.8125rem", fontWeight: 800, cursor: "pointer"
+                                }}
+                            >
+                                {isDeleting ? "TERMINATING..." : "I UNDERSTAND, DELETE MY ACCOUNT"}
+                            </button>
+                            <button 
+                                onClick={() => setShowConfirmDelete(false)}
+                                disabled={isDeleting}
+                                style={{
+                                    width: "100%", padding: "0.85rem", borderRadius: "12px",
+                                    background: "var(--background-glass)", color: "var(--foreground)",
+                                    border: "1px solid var(--card-border)", fontSize: "0.8125rem", fontWeight: 800,
+                                    cursor: "pointer"
+                                }}
+                            >
+                                CANCEL
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Compact Header */}
                 <div style={{
-                    position: "sticky", top: 0, background: "var(--background-glass)", backdropFilter: "blur(12px)", zIndex: 10,
-                    padding: "0.75rem 1rem", borderBottom: "1px solid var(--card-border)",
-                    display: "flex", justifyContent: "space-between", alignItems: "center"
+                    padding: "1rem 1.25rem",
+                    display: "flex", justifyContent: "space-between", alignItems: "center",
+                    borderBottom: "1px solid var(--card-border)"
                 }}>
-                    <h2 style={{ fontSize: "0.9375rem", fontWeight: 700, display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                            <circle cx="12" cy="7" r="4" />
-                        </svg>
-                        Settings
-                    </h2>
-                    <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--foreground-muted)", cursor: "pointer", padding: "0.4rem" }}>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                        <Shield size={18} color="var(--accent)" strokeWidth={2.5} />
+                        <span style={{ fontSize: "0.875rem", fontWeight: 800 }}>Account</span>
+                    </div>
+                    <button onClick={onClose} style={{ 
+                        background: "none", border: "none", color: "var(--foreground-muted)", 
+                        cursor: "pointer", padding: "0.25rem"
+                    }}>
+                        <X size={20} />
                     </button>
                 </div>
 
-                <div style={{ padding: "1rem" }}>
-                    <div style={{ display: "grid", gap: "0.75rem", marginBottom: "0.75rem" }}>
-                        {/* Status Card */}
-                        <div style={{
-                            padding: "1rem",
-                            background: "var(--accent-soft)",
-                            borderRadius: "12px",
-                            border: "1px solid var(--accent)",
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: "0.75rem"
-                        }}>
-                            <div>
-                                <div style={{ fontSize: "0.625rem", color: "var(--foreground-muted)", textTransform: "uppercase", fontWeight: 700 }}>Status</div>
-                                <div style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--accent)", textTransform: "capitalize" }}>
-                                    {user.status || 'Inactive'}
-                                </div>
-                            </div>
-                            <a href="/billing" style={{
-                                width: "100%", padding: "0.6rem",
-                                borderRadius: "8px", background: "var(--accent)", color: "var(--background)",
-                                fontSize: "0.8125rem", fontWeight: 700, textDecoration: "none", textAlign: "center",
-                                transition: "all 0.2s ease"
-                            }} className="hover-lift">Extend Duration</a>
+                <div style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+                    
+                    {/* Compact Status Bar */}
+                    <div style={{
+                        display: "flex", justifyContent: "space-between", alignItems: "center",
+                        padding: "0.75rem", background: "var(--accent-soft)", 
+                        borderRadius: "12px", border: "1px solid var(--card-border)"
+                    }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                            <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "var(--success)" }} />
+                            <span style={{ fontSize: "0.8125rem", fontWeight: 700, textTransform: "capitalize" }}>{user.status || 'Active'}</span>
                         </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", color: "var(--foreground-muted)" }}>
+                            <Calendar size={14} />
+                            <span style={{ fontSize: "0.75rem", fontWeight: 600 }}>{new Date(user.createdAt).toLocaleDateString()}</span>
+                        </div>
+                    </div>
 
-                        {/* Info Card */}
-                        <div 
-                            onClick={async () => {
-                                const success = await copyToClipboard(user.authCode);
-                                if (success) {
-                                    setCopiedSettings(true);
-                                    setTimeout(() => setCopiedSettings(false), 800);
-                                }
-                            }}
-                            style={{
-                                padding: "1rem",
-                                background: copiedSettings ? "var(--success-soft)" : "var(--background)",
-                                borderRadius: "12px",
-                                border: copiedSettings ? "1px solid var(--success)" : "1px solid var(--card-border)",
-                                display: "flex",
-                                flexDirection: "column",
-                                gap: "0.75rem",
-                                cursor: "pointer",
-                                transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
-                                transform: copiedSettings ? "scale(0.98)" : "scale(1)",
-                                boxShadow: copiedSettings ? "0 4px 12px rgba(34, 197, 94, 0.1)" : "none"
-                            }}
-                            className="hover-lift"
-                        >
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                                <div>
-                                    <div style={{ fontSize: "0.625rem", color: copiedSettings ? "var(--success)" : "var(--foreground-muted)", textTransform: "uppercase", fontWeight: 700, transition: "color 0.2s ease" }}>
-                                        {copiedSettings ? "¡COPIED!" : "Access Code"}
-                                    </div>
-                                    <div style={{ fontSize: "0.9375rem", fontWeight: 800, color: copiedSettings ? "var(--success)" : "var(--accent)", fontFamily: "monospace", marginTop: "0.25rem" }}>
-                                        {user.authCode}
-                                    </div>
-                                </div>
-                                <div style={{ display: "flex", gap: "0.5rem" }}>
-                                    <button 
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            downloadCode();
-                                        }}
-                                        style={{
-                                            background: "rgba(0,0,0,0.05)",
-                                            border: "1px solid var(--card-border)",
-                                            borderRadius: "6px",
-                                            padding: "0.3rem",
-                                            cursor: "pointer",
-                                            color: "var(--foreground-muted)",
-                                            display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "center",
-                                            transition: "all 0.2s ease"
-                                        }}
-                                        className="hover-lift"
-                                        title="Download as .txt"
-                                    >
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                                    </button>
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={copiedSettings ? "var(--success)" : "currentColor"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5, marginTop: "0.25rem" }}>
-                                        <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
-                                    </svg>
-                                </div>
-                            </div>
-                            <div style={{ height: "1px", background: "var(--card-border)", opacity: 0.5 }} />
-                            <div>
-                                <div style={{ fontSize: "0.625rem", color: "var(--foreground-muted)", textTransform: "uppercase", fontWeight: 700 }}>Joined</div>
-                                <div style={{ fontSize: "0.8125rem", fontWeight: 600 }}>{new Date(user.createdAt).toLocaleDateString()}</div>
+                    {/* Compact Access Code */}
+                    <div style={{
+                        padding: "1rem", background: "var(--background-glass)", 
+                        borderRadius: "16px", border: "1px solid var(--card-border)",
+                        display: "flex", flexDirection: "column", gap: "0.5rem"
+                    }}>
+                        <div style={{ fontSize: "0.625rem", fontWeight: 800, color: "var(--foreground-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Access Code</div>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <span style={{ fontSize: "1rem", fontWeight: 700, fontFamily: "monospace", letterSpacing: "0.1em" }}>{user.authCode}</span>
+                            <div style={{ display: "flex", gap: "0.4rem" }}>
+                                <button onClick={async () => {
+                                    const success = await copyToClipboard(user.authCode);
+                                    if (success) {
+                                        setCopiedSettings(true);
+                                        setTimeout(() => setCopiedSettings(false), 1500);
+                                    }
+                                }} style={{ background: "none", border: "none", color: copiedSettings ? "var(--success)" : "var(--foreground)", cursor: "pointer" }}>
+                                    <Copy size={16} />
+                                </button>
+                                <button onClick={downloadCode} style={{ background: "none", border: "none", color: "var(--foreground)", cursor: "pointer" }}>
+                                    <Download size={16} />
+                                </button>
                             </div>
                         </div>
                     </div>
 
-                    {/* Danger Zone */}
+                    {/* Quick Actions Row */}
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+                        <a href="/billing" style={{
+                            padding: "0.75rem", borderRadius: "12px", background: "var(--accent)", color: "var(--background)",
+                            fontSize: "0.8125rem", fontWeight: 800, textDecoration: "none", textAlign: "center",
+                            display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem"
+                        }}>
+                             Extend <ExternalLink size={14} />
+                        </a>
+                        <button onClick={async () => {
+                            await fetch("/api/auth/logout", { method: "POST" });
+                            window.location.href = "/";
+                        }} style={{
+                            padding: "0.75rem", borderRadius: "12px", background: "var(--background-glass)",
+                            border: "1px solid var(--card-border)", color: "var(--foreground)",
+                            fontSize: "0.8125rem", fontWeight: 800, cursor: "pointer",
+                            display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem"
+                        }}>
+                            Logout <LogOut size={14} />
+                        </button>
+                    </div>
+
+                    {/* Minimal Danger Zone */}
                     <div style={{
-                        padding: "0.75rem",
-                        border: "1px solid rgba(239, 68, 68, 0.2)",
-                        background: "rgba(239, 68, 68, 0.02)",
-                        borderRadius: "10px"
+                        marginTop: "0.25rem", padding: "0.75rem", borderRadius: "12px",
+                        border: "1px solid rgba(239, 68, 68, 0.1)", background: "rgba(239, 68, 68, 0.02)"
                     }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
-                            <div style={{ fontSize: "0.75rem", color: "var(--error)", fontWeight: 700 }}>Danger Zone</div>
-                            <span style={{ fontSize: "0.625rem", opacity: 0.6 }}>Delete Account</span>
-                        </div>
+                        <div style={{ fontSize: "0.625rem", color: "var(--error)", fontWeight: 800, marginBottom: "0.5rem", textTransform: "uppercase" }}>Quick Delete Account</div>
                         <div style={{ display: "flex", gap: "0.4rem" }}>
                             <input
                                 type="text"
-                                placeholder="Type 'DELETE MY ACCOUNT'"
+                                placeholder="'DELETE MY ACCOUNT'"
                                 value={deleteConfirmation}
                                 onChange={(e) => setDeleteConfirmation(e.target.value)}
-                                style={{ flex: 1, padding: "0.4rem", borderRadius: "4px", border: "1px solid var(--card-border)", background: "var(--background)", color: "var(--error)", fontSize: "0.6875rem" }}
+                                style={{ flex: 1, padding: "0.4rem 0.5rem", borderRadius: "6px", border: "1px solid var(--card-border)", background: "var(--background)", color: "var(--error)", fontSize: "0.6875rem" }}
                             />
-                            <button
-                                onClick={handleDeleteAccount}
-                                disabled={deleteConfirmation !== "DELETE MY ACCOUNT" || isDeleting}
-                                style={{
-                                    padding: "0.4rem 0.6rem", borderRadius: "4px", fontSize: "0.6875rem", fontWeight: 700,
-                                    border: "none", background: deleteConfirmation === "DELETE MY ACCOUNT" ? "var(--error)" : "transparent",
-                                    color: deleteConfirmation === "DELETE MY ACCOUNT" ? "white" : "var(--foreground-muted)",
-                                    cursor: "pointer"
-                                }}
-                            >
-                                {isDeleting ? "..." : "Delete"}
+                            <button onClick={() => setShowConfirmDelete(true)} disabled={deleteConfirmation !== "DELETE MY ACCOUNT" || isDeleting} style={{
+                                padding: "0.4rem 0.75rem", borderRadius: "6px", fontSize: "0.6875rem", fontWeight: 800,
+                                border: "none", background: deleteConfirmation === "DELETE MY ACCOUNT" ? "var(--error)" : "rgba(239, 68, 68, 0.1)",
+                                color: deleteConfirmation === "DELETE MY ACCOUNT" ? "white" : "rgba(239, 68, 68, 0.3)",
+                                cursor: "pointer"
+                            }}>
+                                {isDeleting ? "..." : "Del"}
                             </button>
                         </div>
                     </div>

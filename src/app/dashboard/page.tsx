@@ -192,38 +192,15 @@ export default function DashboardPage() {
         <div style={{ minHeight: "100vh", position: "relative" }}>
             <div className="bg-glow" />
 
-            <Navbar hideLinks />
+            <Navbar hideLinks isLoggedIn={true} />
 
             <main className="container" style={{ paddingTop: "calc(64px + 3rem)", paddingBottom: "var(--container-padding)", paddingLeft: "var(--container-padding)", paddingRight: "var(--container-padding)" }}>
                 <div style={{ maxWidth: "900px", margin: "0 auto" }} className="animate-fadeUp">
 
-                    <div style={{ marginBottom: "1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
+                    <div style={{ marginBottom: "1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "nowrap", gap: "1rem" }}>
                         <div style={{ flex: 1 }}>
                             <h1 style={{ fontSize: "clamp(1.25rem, 5vw, 1.75rem)" }}>Dashboard</h1>
                         </div>
-                        <button
-                            onClick={() => setIsProfileOpen(true)}
-                            className="btn btn-secondary"
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "0.5rem",
-                                fontSize: "0.8125rem",
-                                padding: "0.5rem 1rem",
-                                background: "var(--background-glass)",
-                                border: "1px solid var(--card-border)",
-                                borderRadius: "8px",
-                                color: "var(--foreground)",
-                                cursor: "pointer",
-                                transition: "all 0.2s"
-                            }}
-                        >
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                                <circle cx="12" cy="7" r="4" />
-                            </svg>
-                            Profile Settings
-                        </button>
                     </div>
 
                     <UsageStats user={user} daysRemaining={daysRemaining} />
@@ -250,11 +227,6 @@ export default function DashboardPage() {
                 </div>
             </main>
 
-            <ProfileSettings
-                user={user}
-                isOpen={isProfileOpen}
-                onClose={() => setIsProfileOpen(false)}
-            />
 
             {selectedNode && (
                 <NodeDetailPopup

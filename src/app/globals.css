@@ -23,8 +23,10 @@
   --warning: #f59e0b;
   --error: #ef4444;
 
-  --container-padding: 2.5rem; /* Layout */
-  --header-height: 96px; /* 64px header + 24px top spacing + 8px gap */
+  --container-padding: 2.5rem;
+  /* Layout */
+  --header-height: 96px;
+  /* 64px header + 24px top spacing + 8px gap */
   --card-padding: 2.5rem;
 
   --transition-speed: 0.4s;
@@ -234,12 +236,10 @@ a {
   left: -150%;
   width: 200%;
   height: 200%;
-  background: linear-gradient(
-    45deg,
-    transparent,
-    rgba(255, 255, 255, 0.4),
-    transparent
-  );
+  background: linear-gradient(45deg,
+      transparent,
+      rgba(255, 255, 255, 0.4),
+      transparent);
   transform: rotate(45deg);
   transition: all 0.75s cubic-bezier(0.4, 0, 0.2, 1);
   opacity: 0;
@@ -551,7 +551,8 @@ a {
   overflow: hidden;
 }
 
-.dark-assets, .light-assets {
+.dark-assets,
+.light-assets {
   position: absolute;
   inset: 0;
   transition: opacity 0.8s ease;
@@ -561,8 +562,8 @@ a {
 .mesh-grid {
   position: absolute;
   inset: 0;
-  background-image: linear-gradient(var(--card-border) 1px, transparent 1px), 
-                    linear-gradient(90deg, var(--card-border) 1px, transparent 1px);
+  background-image: linear-gradient(var(--card-border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--card-border) 1px, transparent 1px);
   background-size: 80px 80px;
   opacity: 0.05;
   transform: perspective(1000px) rotateX(60deg) translateY(-200px) scale(2);
@@ -577,8 +578,22 @@ a {
   animation: drift 20s infinite alternate ease-in-out;
 }
 
-.neon-1 { width: 600px; height: 600px; background: var(--accent); top: -200px; right: -100px; }
-.neon-2 { width: 400px; height: 400px; background: #3b82f6; bottom: -50px; left: -100px; animation-delay: -5s; }
+.neon-1 {
+  width: 600px;
+  height: 600px;
+  background: var(--accent);
+  top: -200px;
+  right: -100px;
+}
+
+.neon-2 {
+  width: 400px;
+  height: 400px;
+  background: #3b82f6;
+  bottom: -50px;
+  left: -100px;
+  animation-delay: -5s;
+}
 
 .float-node {
   position: absolute;
@@ -590,14 +605,36 @@ a {
   opacity: 0.3;
 }
 
-.node-1 { top: 20%; left: 15%; animation: floatNode 8s infinite linear; }
-.node-2 { bottom: 30%; right: 10%; animation: floatNode 12s infinite linear reverse; }
+.node-1 {
+  top: 20%;
+  left: 15%;
+  animation: floatNode 8s infinite linear;
+}
+
+.node-2 {
+  bottom: 30%;
+  right: 10%;
+  animation: floatNode 12s infinite linear reverse;
+}
 
 @keyframes floatNode {
-  0% { transform: translateY(0) translateX(0); opacity: 0; }
-  20% { opacity: 0.3; }
-  80% { opacity: 0.3; }
-  100% { transform: translateY(-100px) translateX(20px); opacity: 0; }
+  0% {
+    transform: translateY(0) translateX(0);
+    opacity: 0;
+  }
+
+  20% {
+    opacity: 0.3;
+  }
+
+  80% {
+    opacity: 0.3;
+  }
+
+  100% {
+    transform: translateY(-100px) translateX(20px);
+    opacity: 0;
+  }
 }
 
 /* --- Light Mode: Premium Studio --- */
@@ -609,14 +646,44 @@ a {
   animation: drift 25s infinite alternate ease-in-out;
 }
 
-.studio-1 { width: 500px; height: 500px; background: #6366f1; top: 10%; left: -100px; }
-.studio-2 { width: 400px; height: 400px; background: #8b5cf6; bottom: 20%; right: -50px; animation-delay: -8s; }
-.studio-3 { width: 300px; height: 300px; background: #06b6d4; top: 40%; left: 30%; animation-delay: -12s; }
+.studio-1 {
+  width: 500px;
+  height: 500px;
+  background: #6366f1;
+  top: 10%;
+  left: -100px;
+}
+
+.studio-2 {
+  width: 400px;
+  height: 400px;
+  background: #8b5cf6;
+  bottom: 20%;
+  right: -50px;
+  animation-delay: -8s;
+}
+
+.studio-3 {
+  width: 300px;
+  height: 300px;
+  background: #06b6d4;
+  top: 40%;
+  left: 30%;
+  animation-delay: -12s;
+}
 
 @keyframes drift {
-  0% { transform: translate(0, 0) scale(1); }
-  50% { transform: translate(40px, -30px) scale(1.1); }
-  100% { transform: translate(-30px, 50px) scale(1); }
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate(40px, -30px) scale(1.1);
+  }
+
+  100% {
+    transform: translate(-30px, 50px) scale(1);
+  }
 }
 
 /* --- Card Interactions --- */

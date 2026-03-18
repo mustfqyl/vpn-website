@@ -60,6 +60,14 @@ export async function POST(request: Request) {
             maxAge: 60 * 60 * 24, // 1 day
             path: '/',
         })
+        // Non-httpOnly indicator cookie so client-side JS can detect auth instantly
+        cookieStore.set('auth_status', '1', {
+            httpOnly: false,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 60 * 60 * 24, // 1 day
+            path: '/',
+        })
 
         return NextResponse.json({
             user: {
