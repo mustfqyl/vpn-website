@@ -136,7 +136,7 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
                     <h2 style={{ fontSize: "2rem", fontWeight: 600, marginBottom: "1rem" }}>Secure your connection today.</h2>
                     <p style={{ color: "var(--foreground-muted)", marginBottom: "2rem" }}>Experience the protocols mentioned above in one simple interface.</p>
                     <Link href="/auth/register" className="btn btn-primary" style={{ padding: "1rem 2.5rem" }}>
-                        Join SecureVPN
+                        Join Oculve
                     </Link>
                 </div>
             </article>

@@ -1,6 +1,6 @@
-# Secure VPN Customer Portal
+# Oculve Customer Portal
 
-A production-ready, security-focused Next.js VPN customer portal integrated with PasarGuard (Marzban) VPN panels.
+A production-ready, security-focused Next.js VPN customer portal integrated with Oculve (Marzban) VPN panels.
 
 ## 🏗 Architecture
 
@@ -45,7 +45,7 @@ npm run dev
 | `DATABASE_URL` | PostgreSQL connection string | Yes |
 | `JWT_SECRET` | Secret key for signing JWT tokens | Yes |
 | `AUTH_SECRET` | Secret key for Auth Code generation | Yes |
-| `VPN_PANEL_API_URL` | API URL of your PasarGuard panel | Yes |
+| `VPN_PANEL_API_URL` | API URL of your Oculve panel | Yes |
 | `VPN_PANEL_ADMIN_USERNAME` | Admin username for the VPN panel | Yes |
 | `VPN_PANEL_ADMIN_PASSWORD` | Admin password for the VPN panel | Yes |
 | `UPSTASH_REDIS_REST_URL` | Redis URL for JWT blacklisting | Yes |

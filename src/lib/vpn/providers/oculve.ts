@@ -4,8 +4,8 @@ import { getPlanConfig } from '../plans';
 import { logger } from '@/lib/logger';
 import net from 'net';
 
-export class PasarGuardProvider implements IVpnProvider {
-    readonly id = 'pasarguard';
+export class OculveProvider implements IVpnProvider {
+    readonly id = 'oculve';
     private baseUrl: string;
     private username: string;
     private password: string;
@@ -44,7 +44,7 @@ export class PasarGuardProvider implements IVpnProvider {
         });
 
         if (!res.ok) {
-            throw new Error(`PasarGuard login failed (${res.status})`);
+            throw new Error(`Oculve login failed (${res.status})`);
         }
 
         const data = await res.json();
@@ -88,7 +88,7 @@ export class PasarGuardProvider implements IVpnProvider {
             subUrl = `${this.baseUrl}${subUrl}`;
         }
 
-        // Robust date parsing for Pasarguard 'expire' field
+        // Robust date parsing for Oculve 'expire' field
         let expiresAtUnix: number | null = null;
         if (data.expire !== undefined && data.expire !== null && data.expire !== 0) {
             const parsed = new Date(data.expire);
@@ -109,7 +109,7 @@ export class PasarGuardProvider implements IVpnProvider {
             username: data.username,
             status: data.status,
             usedTrafficBytes: data.used_traffic,
-            dataLimitBytes: data.data_limit === 0 ? null : data.data_limit, // 0 means unlimited in Marzban/PasarGuard
+            dataLimitBytes: data.data_limit === 0 ? null : data.data_limit, // 0 means unlimited in Marzban/Oculve
             expiresAtUnix: expiresAtUnix,
             subscriptionUrl: subUrl,
             group: data.groups && data.groups.length > 0 ? data.groups[0].name : undefined,
@@ -163,7 +163,7 @@ export class PasarGuardProvider implements IVpnProvider {
         }
 
         if (options?.dataLimitGB !== undefined) {
-            // In Marzban/PasarGuard API: 0 means unlimited.
+            // In Marzban/Oculve API: 0 means unlimited.
             payload.data_limit = (options.dataLimitGB === null || options.dataLimitGB === 0) 
                 ? 0 
                 : options.dataLimitGB * 1024 * 1024 * 1024;
@@ -179,7 +179,7 @@ export class PasarGuardProvider implements IVpnProvider {
 
         if (!res.ok) {
             const errorText = await res.text();
-            logger.error({ errorText, username }, 'PasarGuard API Error during user creation');
+            logger.error({ errorText, username }, 'Oculve API Error during user creation');
 
             if (res.status === 409) {
                 const existing = await this.getUser(username);
@@ -208,7 +208,7 @@ export class PasarGuardProvider implements IVpnProvider {
         }
         if (data.expire !== undefined) payload.expire = data.expire;
         if (data.dataLimit !== undefined) {
-            // In Marzban/PasarGuard API: null or 0 means unlimited. 
+            // In Marzban/Oculve API: null or 0 means unlimited. 
             // We explicitly send 0 to ensure it's cleared if it was previously set.
             payload.data_limit = data.dataLimit === null ? 0 : data.dataLimit;
         }
@@ -228,7 +228,7 @@ export class PasarGuardProvider implements IVpnProvider {
 
         if (!res.ok) {
             const errorText = await res.text();
-            logger.error({ errorText, username }, 'PasarGuard API Error during user update');
+            logger.error({ errorText, username }, 'Oculve API Error during user update');
         }
 
         return res.ok;
@@ -271,7 +271,7 @@ export class PasarGuardProvider implements IVpnProvider {
 
     async deleteUser(username: string): Promise<boolean> {
         const url = `${this.baseUrl}/api/user/${encodeURIComponent(username)}`;
-        logger.info({ username, url }, '[PasarGuard] Requesting user deletion');
+        logger.info({ username, url }, '[Oculve] Requesting user deletion');
         
         try {
             const res = await this.apiRequest(`/api/user/${encodeURIComponent(username)}`, {
@@ -280,24 +280,24 @@ export class PasarGuardProvider implements IVpnProvider {
 
             if (res.ok || res.status === 404) {
                 if (res.status === 404) {
-                    logger.info({ username }, '[PasarGuard] User already missing from panel (404). Treating as success.');
+                    logger.info({ username }, '[Oculve] User already missing from panel (404). Treating as success.');
                 } else {
-                    logger.info({ username, status: res.status }, '[PasarGuard] Successfully deleted user');
+                    logger.info({ username, status: res.status }, '[Oculve] Successfully deleted user');
                 }
                 return true;
             }
 
             const errText = await res.text();
-            logger.error({ username, status: res.status, error: errText }, '[PasarGuard] Deletion failed');
+            logger.error({ username, status: res.status, error: errText }, '[Oculve] Deletion failed');
             return false;
         } catch (error: any) {
-            logger.error({ username, error: error.message }, '[PasarGuard] Deletion error');
+            logger.error({ username, error: error.message }, '[Oculve] Deletion error');
             return false;
         }
     }
 
     async listUsers(): Promise<VpnUser[]> {
-        // Try /api/users first (standard Marzban/PasarGuard)
+        // Try /api/users first (standard Marzban/Oculve)
         let res = await this.apiRequest('/api/users');
 
         if (!res.ok) {
@@ -321,7 +321,7 @@ export class PasarGuardProvider implements IVpnProvider {
 
     async getSubscriptionContent(subUrl: string): Promise<string> {
         const res = await fetch(subUrl, {
-            headers: { 'User-Agent': 'SecureVPN/1.0' }
+            headers: { 'User-Agent': 'Oculve/1.0' }
         });
         if (!res.ok) throw new Error(`Failed to fetch subscription: ${res.status}`);
         return await res.text();
@@ -423,7 +423,7 @@ export class PasarGuardProvider implements IVpnProvider {
                 }
             }
         } catch (error) {
-            logger.debug({ username, error }, 'PasarGuard usage API not available or failed, using synthetic fallback');
+            logger.debug({ username, error }, 'Oculve usage API not available or failed, using synthetic fallback');
         }
 
         // Fallback: Generate synthetic recent usage data based on their total used

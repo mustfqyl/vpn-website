@@ -29,10 +29,10 @@ export async function POST(request: Request) {
         const authCode = payload.authCode as string;
         const userId = payload.userId as string;
 
-        // Fetch user from PasarGuard API to check status
+        // Fetch user from Oculve API to check status
         const pgUser = await vpnProvider.getUser(authCode);
         if (!pgUser) {
-            throw new AppError('User not found in PasarGuard', 404);
+            throw new AppError('User not found in Oculve', 404);
         }
 
         // Check if already premium
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
 
         const planConfig = getPlanConfig('Trial');
 
-        // Update user in PasarGuard via API
+        // Update user in Oculve via API
         try {
             await vpnProvider.updateUser(authCode, {
                 group: 'Trial',
@@ -52,9 +52,9 @@ export async function POST(request: Request) {
                 note: 'Trial'
             });
 
-            logger.info({ userId, authCode }, 'Trial activated successfully via PasarGuard API');
+            logger.info({ userId, authCode }, 'Trial activated successfully via Oculve API');
         } catch (error) {
-            logger.error({ error, userId, authCode }, 'PasarGuard trial activation failed');
+            logger.error({ error, userId, authCode }, 'Oculve trial activation failed');
             throw new AppError('Failed to activate trial service. Please try again later.', 503);
         }
 

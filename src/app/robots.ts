@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/api/', '/checkout/', '/dashboard/'],
     },
-    sitemap: 'https://vpn.com/sitemap.xml',
+    sitemap: `${process.env.NEXT_PUBLIC_APP_URL || 'https://oculve.com'}/sitemap.xml`,
   }
 }

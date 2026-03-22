@@ -87,7 +87,7 @@ export default function Hero({ isLoggedIn, isAuthLoading, nodeStats }: HeroProps
             lineHeight: 1.05,
             fontWeight: 800
           }}>
-            Pure Privacy.<br />Simply Fast.
+            See<br />the unseen.
           </h1>
 
           <p className="animate-fadeUp" style={{

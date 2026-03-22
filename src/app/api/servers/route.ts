@@ -19,11 +19,11 @@ export async function GET(request: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        // Fetch live node stats from PasarGuard API
+        // Fetch live node stats from Oculve API
         const { nodes } = await vpnProvider.getStats();
 
-        // In the new architecture, we just show all available nodes from PasarGuard.
-        // We can filter by "Premium" or other logic if PasarGuard returns that info.
+        // In the new architecture, we just show all available nodes from Oculve.
+        // We can filter by "Premium" or other logic if Oculve returns that info.
         // For now, return all nodes.
         const mappedNodes = nodes.map(node => ({
             id: node.name,

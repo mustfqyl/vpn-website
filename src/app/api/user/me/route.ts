@@ -27,7 +27,7 @@ export async function GET() {
             throw new AppError('Invalid session. Please login again.', 401);
         }
 
-        // Fetch user from PasarGuard DB via Prisma
+        // Fetch user from Oculve DB via Prisma
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const user = await (prisma as any).vpnUser.findUnique({
             where: { id: bigIntId },
@@ -43,10 +43,10 @@ export async function GET() {
         if (!user) {
             const cookieStore = await cookies();
             cookieStore.delete('token');
-            throw new AppError('User not found in PasarGuard', 404)
+            throw new AppError('User not found in Oculve', 404)
         }
 
-        // Fetch live status from PasarGuard API for most up-to-date info
+        // Fetch live status from Oculve API for most up-to-date info
         const pgUser = await vpnProvider.getUser(user.username);
 
         // Determine role based on groups
@@ -111,7 +111,7 @@ export async function DELETE() {
         if (!user) throw new AppError('User not found', 404);
 
         // 1. Delete from VPN Provider API
-        logger.info({ userId: user.id.toString(), username: user.username }, 'Account deletion: Attempting to delete via PasarGuard API');
+        logger.info({ userId: user.id.toString(), username: user.username }, 'Account deletion: Attempting to delete via Oculve API');
         const vpnDeleted = await vpnProvider.deleteUser(user.username);
         
         if (!vpnDeleted) {
@@ -119,10 +119,10 @@ export async function DELETE() {
             throw new AppError('Failed to delete VPN user. Please try again later.', 500);
         }
         
-        // Note: PasarGuard might automatically remove the user from its DB if we used the API.
+        // Note: Oculve might automatically remove the user from its DB if we used the API.
         // If not, we don't have DELETE permissions on the DB normally in this setup according to instructions
-        // ("Prisma artık hiç tablo OLUŞTURMUYOR. Sadece PasarGuard'ın mevcut tablolarını OKUYOR.")
-        // But the user said "Prisma query ile okunacak" and "PasarGuard API'ye POST isteği at... başka hiçbir yere yazma"
+        // ("Prisma artık hiç tablo OLUŞTURMUYOR. Sadece Oculve'ın mevcut tablolarını OKUYOR.")
+        // But the user said "Prisma query ile okunacak" and "Oculve API'ye POST isteği at... başka hiçbir yere yazma"
         // So we skip DB DELETE here as we should only use API for mutations.
 
         // Clear session cookie

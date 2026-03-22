@@ -43,21 +43,21 @@ export async function POST(request: Request) {
         
         logger.info({ userId, amount, days, orderId }, 'Processing mock checkout');
 
-        // Note: Payment record creation skipped because Payment model is deprecated in new PasarGuard-only architecture
-        // and we should only read from PasarGuard tables or use their API.
+        // Note: Payment record creation skipped because Payment model is deprecated in new Oculve-only architecture
+        // and we should only read from Oculve tables or use their API.
         
         const planConfig = getPlanConfig('Premium');
 
         // MOCK PAYMENT PROCESS
         logger.info({ authCode, plan: 'Premium' }, 'Processing mock payment');
 
-        // Update user in PasarGuard via API
+        // Update user in Oculve via API
         try {
             // First get current user to see if they have an active expiry
             const currentUser = await vpnProvider.getUser(authCode);
             const nowUnix = Math.floor(Date.now() / 1000);
             
-            // PasarGuard/Marzban expire is usually in seconds. 
+            // Oculve/Marzban expire is usually in seconds. 
             // Our mapUser converts it to milliseconds for the VpnUser object.
             let currentExpireUnix = currentUser?.expiresAtUnix 
                 ? Math.floor(currentUser.expiresAtUnix / 1000) 
@@ -87,9 +87,9 @@ export async function POST(request: Request) {
                 throw new Error('VPN provider failed to update user');
             }
 
-            logger.info({ userId, authCode, orderId, newExpireUnix }, 'Premium activation successful via PasarGuard API');
+            logger.info({ userId, authCode, orderId, newExpireUnix }, 'Premium activation successful via Oculve API');
         } catch (error) {
-            logger.error({ error, userId, authCode, orderId }, 'PasarGuard premium activation failed');
+            logger.error({ error, userId, authCode, orderId }, 'Oculve premium activation failed');
             throw new AppError('Payment processed but failed to activate VPN service. Contact support.', 503);
         }
 

@@ -6,20 +6,19 @@ import Footer from "@/app/components/Footer";
 import Hero from "@/app/components/landing/Hero";
 import Stats from "@/app/components/landing/Stats";
 import Features from "@/app/components/landing/Features";
-import Protocols from "@/app/components/landing/Protocols";
 import Pricing from "@/app/components/landing/Pricing";
 
 export default function HomePage() {
-  const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    if (typeof window !== "undefined") {
-      return document.cookie.split(";").some((c) => c.trim().startsWith("auth_status=1"));
-    }
-    return false;
-  });
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [nodeStats, setNodeStats] = useState<{ total: number; active: number } | null>(null);
 
   useEffect(() => {
+    // Initial check from cookies to avoid long skeleton wait
+    if (document.cookie.split(";").some((c) => c.trim().startsWith("auth_status=1"))) {
+      setIsLoggedIn(true);
+    }
+
     fetch('/api/user/me', { credentials: 'include' })
       .then(res => {
         if (res.ok) {
@@ -78,8 +77,6 @@ export default function HomePage() {
       <Stats />
 
       <Features />
-
-      <Protocols />
 
       <Pricing />
 

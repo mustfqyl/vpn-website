@@ -33,7 +33,7 @@ export async function POST(request: Request) {
         const planName = plan;
         const planConfig = getPlanConfig(planName);
 
-        // 2. Create user in PasarGuard via API
+        // 2. Create user in Oculve via API
         let pgUser;
         try {
             pgUser = await vpnProvider.createUser(authCode, {
@@ -44,14 +44,14 @@ export async function POST(request: Request) {
                 status: plan === 'Trial' ? 'active' : 'on_hold'
             })
         } catch (error: any) {
-            console.error('PasarGuard user creation failed:', error);
+            console.error('Oculve user creation failed:', error);
             throw new AppError('Failed to create VPN account. Please try again.', 503);
         }
 
         // Determine role
         const role = plan === 'Trial' ? 'TRIAL' : 'PREMIUM';
 
-        // 3. Wait a moment for PasarGuard to sync to its DB and fetch numeric ID via Prisma
+        // 3. Wait a moment for Oculve to sync to its DB and fetch numeric ID via Prisma
         // If the API provided the ID (it should), we use it. Otherwise we fetch from DB.
         let userId = pgUser.id ? pgUser.id.toString() : null;
         

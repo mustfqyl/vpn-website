@@ -4,16 +4,16 @@ import { logger } from '@/lib/logger';
 
 /**
  * VpnSyncService
- * In the new architecture where we read directly from PasarGuard's DB,
+ * In the new architecture where we read directly from Oculve's DB,
  * many of the traditional "sync" tasks are redundant.
  */
 export class VpnSyncService {
     /**
      * Reconciles a user's status.
-     * In this architecture, we primarily trust the PasarGuard DB and API.
+     * In this architecture, we primarily trust the Oculve DB and API.
      */
     static async reconcileUser(userId: string) {
-        // Since we are reading directly from PasarGuard's DB, there's no "sync" needed
+        // Since we are reading directly from Oculve's DB, there's no "sync" needed
         // between local and remote DB roles. We just return the latest from API if for some reason
         // we need an extra check.
         try {

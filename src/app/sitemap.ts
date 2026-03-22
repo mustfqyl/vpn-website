@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://vpn.com' // Should be from env in real app
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://oculve.com' // From env or fallback
   
   return [
     {

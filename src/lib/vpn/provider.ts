@@ -2,7 +2,7 @@ import { VpnUser, VpnCreateOptions, VpnUpdatePayload, VpnProviderStats } from '.
 
 export interface IVpnProvider {
     /**
-     * Unique identifier for this provider (e.g. 'pasarguard', 'marzban')
+     * Unique identifier for this provider (e.g. 'oculve', 'marzban')
      */
     readonly id: string;
 

@@ -83,9 +83,9 @@ export default function DownloadPage() {
 
   const platforms = [
     { id: "windows", name: "Windows", icon: <Monitor size={24} />, version: "2.4.1", link: "/download/setup.exe" },
-    { id: "apple", name: "macOS / iOS", icon: <Apple size={24} />, version: "2.3.8", link: "https://apps.apple.com/app/securevpn" },
+    { id: "apple", name: "macOS / iOS", icon: <Apple size={24} />, version: "2.3.8", link: "https://apps.apple.com/app/oculve" },
     { id: "android", name: "Android", icon: <Smartphone size={24} />, version: "2.5.0", link: "/download/app.apk" },
-    { id: "linux", name: "Linux CLI", icon: <Terminal size={24} />, version: "1.9.2", command: "curl -sL https://securevpn.com/install.sh | sudo bash" }
+    { id: "linux", name: "Linux CLI", icon: <Terminal size={24} />, version: "1.9.2", command: "curl -sL https://oculve.com/install.sh | sudo bash" }
   ];
 
   return (

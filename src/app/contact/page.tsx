@@ -135,7 +135,7 @@ export default function ContactPage() {
 
                     {/* Right Side: Form */}
                     <div className="card" style={{ padding: "2.5rem" }}>
-                        <h2 style={{ fontSize: "1.5rem", fontWeight: 600, marginBottom: "2rem" }}>Send a Protocol</h2>
+                        <h2 style={{ fontSize: "1.5rem", fontWeight: 600, marginBottom: "2rem" }}>Send a request</h2>
                         
                         {formStatus === 'success' ? (
                             <div style={{ textAlign: 'center', padding: '2rem 0' }}>
@@ -165,7 +165,7 @@ export default function ContactPage() {
                                         name="email"
                                         type="email"
                                         className="input"
-                                        placeholder="name@company.com"
+                                        placeholder="name@mail.com"
                                         required
                                         style={{ background: "rgba(255, 255, 255, 0.03)" }}
                                     />

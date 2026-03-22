@@ -1,16 +1,16 @@
 import { IVpnProvider } from './provider';
-import { PasarGuardProvider } from './providers/pasarguard';
+import { OculveProvider } from './providers/oculve';
 
 export class VpnProviderFactory {
     private static instance: IVpnProvider | null = null;
 
     static getProvider(): IVpnProvider {
         if (!this.instance) {
-            const providerType = process.env.VPN_PROVIDER || 'pasarguard';
+            const providerType = process.env.VPN_PROVIDER || 'oculve';
             switch (providerType) {
-                case 'pasarguard':
+                case 'oculve':
                 default:
-                    this.instance = new PasarGuardProvider();
+                    this.instance = new OculveProvider();
                     break;
             }
         }

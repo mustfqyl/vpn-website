@@ -10,9 +10,13 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { headers } from "next/headers";
 
 export const metadata: Metadata = {
-  title: `${siteConfig.name}VPN — Private & Fast`,
-  description: `Experience the internet without limits with ${siteConfig.name}VPN. Private, fast, and secure network infrastructure.`,
-  keywords: ["VPN", "privacy", "security", "fast internet", "encrypted", "post-quantum"],
+  title: `${siteConfig.name} — See Unseen`,
+  description: `${siteConfig.name}: See Unseen. Experience the internet without limits. Private, lightning-fast, and post-quantum encrypted network infrastructure.`,
+  keywords: ["VPN", "privacy", "security", "fast internet", "encrypted", "post-quantum", "oculve"],
+  icons: {
+    icon: "/favicon.svg",
+    apple: "/favicon.svg",
+  },
 };
 
 export default async function RootLayout({
@@ -27,8 +31,8 @@ export default async function RootLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link 
-          href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" 
+        <link
+          href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap"
           rel="stylesheet"
         />
         <script

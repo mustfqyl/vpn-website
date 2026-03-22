@@ -24,9 +24,9 @@ export const ProfileSettings = ({ user, isOpen, onClose }: ProfileSettingsProps)
 
     const downloadCode = () => {
         const element = document.createElement("a");
-        const file = new Blob([`SECURE VPN ACCESS CODE\n------------------------\nCode: ${user.authCode}\n\nKEEP THIS FILE SAFE. IT IS YOUR ONLY ACCESS KEY.`], {type: 'text/plain'});
+        const file = new Blob([`OCULVE ACCESS CODE\n------------------------\nCode: ${user.authCode}\n\nKEEP THIS FILE SAFE. IT IS YOUR ONLY ACCESS KEY.`], { type: 'text/plain' });
         element.href = URL.createObjectURL(file);
-        element.download = "secure-vpn-access-code.txt";
+        element.download = "oculve-access-code.txt";
         document.body.appendChild(element);
         element.click();
         document.body.removeChild(element);
@@ -75,7 +75,7 @@ export const ProfileSettings = ({ user, isOpen, onClose }: ProfileSettingsProps)
                 animation: "fadeInUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
                 position: "relative"
             }}>
-                
+
                 {/* Formal Deletion Popup Overlay */}
                 {showConfirmDelete && (
                     <div style={{
@@ -88,18 +88,18 @@ export const ProfileSettings = ({ user, isOpen, onClose }: ProfileSettingsProps)
                                 <Trash2 size={24} />
                                 <h3 style={{ fontSize: "1rem", fontWeight: 800 }}>FINAL WARNING</h3>
                             </div>
-                            <div style={{ 
+                            <div style={{
                                 padding: "1rem", borderRadius: "12px", background: "rgba(239, 68, 68, 0.05)",
                                 border: "1px solid rgba(239, 68, 68, 0.1)", fontSize: "0.75rem", color: "var(--foreground)",
                                 lineHeight: "1.6", fontWeight: 500
                             }}>
                                 <p style={{ marginBottom: "0.75rem" }}><strong>THIS ACTION IS IRREVERSIBLE.</strong></p>
                                 <p>By proceeding, you acknowledge that all remaining subscription time and node access will be <strong>PERMANENTLY FORFEITED</strong> without any possibility of refund or recovery.</p>
-                                <p style={{ marginTop: "0.75rem" }}>SecureVPN assumes no responsibility for data loss or service termination resulting from this action.</p>
+                                <p style={{ marginTop: "0.75rem" }}>Oculve assumes no responsibility for data loss or service termination resulting from this action.</p>
                             </div>
                         </div>
                         <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                            <button 
+                            <button
                                 onClick={handleDeleteAccount}
                                 disabled={isDeleting}
                                 style={{
@@ -110,7 +110,7 @@ export const ProfileSettings = ({ user, isOpen, onClose }: ProfileSettingsProps)
                             >
                                 {isDeleting ? "TERMINATING..." : "I UNDERSTAND, DELETE MY ACCOUNT"}
                             </button>
-                            <button 
+                            <button
                                 onClick={() => setShowConfirmDelete(false)}
                                 disabled={isDeleting}
                                 style={{
@@ -136,8 +136,8 @@ export const ProfileSettings = ({ user, isOpen, onClose }: ProfileSettingsProps)
                         <Shield size={18} color="var(--accent)" strokeWidth={2.5} />
                         <span style={{ fontSize: "0.875rem", fontWeight: 800 }}>Account</span>
                     </div>
-                    <button onClick={onClose} style={{ 
-                        background: "none", border: "none", color: "var(--foreground-muted)", 
+                    <button onClick={onClose} style={{
+                        background: "none", border: "none", color: "var(--foreground-muted)",
                         cursor: "pointer", padding: "0.25rem"
                     }}>
                         <X size={20} />
@@ -145,11 +145,11 @@ export const ProfileSettings = ({ user, isOpen, onClose }: ProfileSettingsProps)
                 </div>
 
                 <div style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
-                    
+
                     {/* Compact Status Bar */}
                     <div style={{
                         display: "flex", justifyContent: "space-between", alignItems: "center",
-                        padding: "0.75rem", background: "var(--accent-soft)", 
+                        padding: "0.75rem", background: "var(--accent-soft)",
                         borderRadius: "12px", border: "1px solid var(--card-border)"
                     }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
@@ -164,7 +164,7 @@ export const ProfileSettings = ({ user, isOpen, onClose }: ProfileSettingsProps)
 
                     {/* Compact Access Code */}
                     <div style={{
-                        padding: "1rem", background: "var(--background-glass)", 
+                        padding: "1rem", background: "var(--background-glass)",
                         borderRadius: "16px", border: "1px solid var(--card-border)",
                         display: "flex", flexDirection: "column", gap: "0.5rem"
                     }}>
@@ -195,7 +195,7 @@ export const ProfileSettings = ({ user, isOpen, onClose }: ProfileSettingsProps)
                             fontSize: "0.8125rem", fontWeight: 800, textDecoration: "none", textAlign: "center",
                             display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem"
                         }}>
-                             Extend <ExternalLink size={14} />
+                            Extend <ExternalLink size={14} />
                         </a>
                         <button onClick={async () => {
                             await fetch("/api/auth/logout", { method: "POST" });

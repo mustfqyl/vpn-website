@@ -46,7 +46,7 @@ export default function TermsPage() {
                             1. Acceptance of Terms
                         </h2>
                         <p>
-                            By accessing or using SecureVPN, you agree to be bound by these Terms of Service.
+                            By accessing or using Oculve, you agree to be bound by these Terms of Service.
                             If you do not agree to these terms, please do not use our service.
                         </p>
                     </section>
@@ -56,7 +56,7 @@ export default function TermsPage() {
                             2. Service Description
                         </h2>
                         <p>
-                            SecureVPN provides virtual private network services that encrypt your internet
+                            Oculve provides virtual private network services that encrypt your internet
                             connection and protect your online privacy. We offer various subscription plans
                             with different features and pricing.
                         </p>
@@ -67,7 +67,7 @@ export default function TermsPage() {
                             3. Acceptable Use
                         </h2>
                         <p style={{ marginBottom: "1rem" }}>
-                            You agree not to use SecureVPN for:
+                            You agree not to use Oculve for:
                         </p>
                         <ul style={{ paddingLeft: "1.5rem" }}>
                             <li>Any illegal activities under applicable law</li>
@@ -129,7 +129,7 @@ export default function TermsPage() {
                             8. Limitation of Liability
                         </h2>
                         <p>
-                            SecureVPN is provided &quot;as is&quot; without warranties of any kind. We are not liable
+                            Oculve is provided &quot;as is&quot; without warranties of any kind. We are not liable
                             for any indirect, incidental, or consequential damages arising from use of our service.
                         </p>
                     </section>

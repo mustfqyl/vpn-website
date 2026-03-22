@@ -1,6 +1,6 @@
-# PasarGuard (Marzban) API Capabilities Guide
+# Pasarguard (Marzban) API Capabilities Guide
 
-PasarGuard is built on the Marzban API. Below is a comprehensive list of all capabilities exposed by the REST API, grouped by functionality.
+Pasarguard is built on the Marzban API. Below is a comprehensive list of all capabilities exposed by the REST API, grouped by functionality.
 
 ## 1. Authentication & Security
 - **Admin Token (`POST /api/admin/token`)**: Generate an OAuth2 access token using admin credentials.
