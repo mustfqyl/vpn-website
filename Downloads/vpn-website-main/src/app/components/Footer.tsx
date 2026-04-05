@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { siteConfig } from "@/lib/siteConfig";
+import { OculveLogo } from "./BrandAssets";
 
 export default function Footer() {
   return (
@@ -20,9 +20,8 @@ export default function Footer() {
           marginBottom: "4rem"
         }}>
           <div style={{ gridColumn: "span 1" }}>
-            <Link href="/" style={{ fontSize: "1.25rem", fontWeight: 700, letterSpacing: "-0.01em", display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1.5rem" }}>
-              <div style={{ width: "24px", height: "24px", background: "var(--accent)", borderRadius: "4px" }} />
-              {siteConfig.name}
+            <Link href="/" style={{ marginBottom: "1.5rem", display: "block" }}>
+              <OculveLogo height={32} />
             </Link>
             <p style={{ maxWidth: "350px", fontSize: "0.9375rem", color: "var(--foreground-muted)" }}>
               We take pleasure in working to make an uncensored and private internet, which we believe everyone has a right to, as accessible as possible in the simplest way.
@@ -58,7 +57,7 @@ export default function Footer() {
           color: "var(--foreground-subtle)",
           fontWeight: 500
         }}>
-          <span>© {new Date().getFullYear()} {siteConfig.name} - All rights reserved.</span>
+          <span>© {new Date().getFullYear()} oculve - All rights reserved.</span>
           <div style={{ display: "flex", gap: "1.5rem" }}>
             <Link href="#" className="link-subtle">Twitter.</Link>
             <Link href="#" className="link-subtle">GitHub.</Link>

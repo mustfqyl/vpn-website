@@ -1,20 +1,44 @@
 import { createHmac } from "crypto";
-import fs from "fs";
-import path from "path";
+import { prisma } from './prisma';
+import { logger } from './logger';
 
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-const STATE_FILE = path.join(process.cwd(), "data", "state.json");
+const DB_COUNTER_KEY = 'auth-code-counter';
 
-function readCounter(): bigint {
+async function getAndIncrementCounter(): Promise<bigint> {
   try {
-    if (!fs.existsSync(STATE_FILE)) return 1n;
-    return BigInt(JSON.parse(fs.readFileSync(STATE_FILE, "utf8")).counter ?? "1");
-  } catch { return 1n; }
-}
-
-function saveCounter(counter: bigint): void {
-  fs.mkdirSync(path.dirname(STATE_FILE), { recursive: true });
-  fs.writeFileSync(STATE_FILE, JSON.stringify({ counter: counter.toString() }, null, 2));
+    // Atomic read-and-modify using PostgreSQL raw CTE/query
+    const result: any[] = await prisma.$queryRaw`
+      INSERT INTO app_state (key, value)
+      VALUES (${DB_COUNTER_KEY}, '2')
+      ON CONFLICT (key) DO UPDATE 
+      SET value = (CAST(app_state.value AS BIGINT) + 1)::text
+      RETURNING value
+    `;
+    
+    if (result && result.length > 0) {
+      // The returning value is the UPGRADED value, representing the NEXT counter. 
+      // We subtract 1 to get the CURRENT counter that we should use for this code.
+      return BigInt(result[0].value) - 1n;
+    }
+    return 1n;
+  } catch (error) {
+    logger.error({ error }, 'Database atomic increment error for auth-code-counter');
+    
+    // Non-atomic fallback for safety
+    try {
+      const state = await prisma.appState.findUnique({ where: { key: DB_COUNTER_KEY } });
+      if (state) {
+        const val = BigInt(state.value);
+        await prisma.appState.update({ where: { key: DB_COUNTER_KEY }, data: { value: (val + 1n).toString() } });
+        return val;
+      }
+      await prisma.appState.create({ data: { key: DB_COUNTER_KEY, value: '2' } });
+      return 1n;
+    } catch (fallbackError) {
+      return 1n;
+    }
+  }
 }
 
 function counterToCode(counter: bigint): string {
@@ -46,9 +70,7 @@ export function isValidFormat(code: string): boolean {
   return /^[A-Z2-9]{4}-[A-Z2-9]{4}-[A-Z2-9]{4}$/.test(code.toUpperCase());
 }
 
-export function issueCode(): string {
-  const counter = readCounter();
-  const code = counterToCode(counter);
-  saveCounter(counter + 1n);
-  return code;
+export async function issueCode(): Promise<string> {
+  const counter = await getAndIncrementCounter();
+  return counterToCode(counter);
 }

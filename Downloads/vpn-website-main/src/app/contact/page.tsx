@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { siteConfig } from "@/lib/siteConfig";
 import { useTheme } from "@/context/ThemeContext";
 import Navbar from "@/app/components/Navbar";
@@ -9,6 +9,27 @@ import Footer from "@/app/components/Footer";
 
 
 export default function ContactPage() {
+    const [isLoggedIn, setIsLoggedIn] = useState(() => {
+        if (typeof window !== "undefined") {
+            return document.cookie.split(";").some((c) => c.trim().startsWith("auth_status=1"));
+        }
+        return false;
+    });
+    const [isAuthLoading, setIsAuthLoading] = useState(true);
+
+    useEffect(() => {
+        fetch("/api/user/me", { credentials: "include" })
+            .then((res) => {
+                if (res.ok) {
+                    setIsLoggedIn(true);
+                } else {
+                    setIsLoggedIn(false);
+                }
+            })
+            .catch(() => { /* Silent failure */ })
+            .finally(() => setIsAuthLoading(false));
+    }, []);
+
     const [formStatus, setFormStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
     const [formMessage, setFormMessage] = useState('');
 
@@ -50,10 +71,10 @@ export default function ContactPage() {
         <div style={{ minHeight: "100vh", position: "relative" }}>
             <div className="bg-glow" />
 
-            <Navbar />
+            <Navbar isLoggedIn={isLoggedIn} isAuthLoading={isAuthLoading} />
 
             {/* Content */}
-            <main className="container" style={{ padding: "160px 1.5rem 80px" }}>
+            <main className="container" style={{ padding: "calc(var(--header-height) + 40px) 1.5rem 80px" }}>
                 <div style={{
                     display: "grid",
                     gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
@@ -114,7 +135,7 @@ export default function ContactPage() {
 
                     {/* Right Side: Form */}
                     <div className="card" style={{ padding: "2.5rem" }}>
-                        <h2 style={{ fontSize: "1.5rem", fontWeight: 600, marginBottom: "2rem" }}>Send a Protocol</h2>
+                        <h2 style={{ fontSize: "1.5rem", fontWeight: 600, marginBottom: "2rem" }}>Send a request</h2>
                         
                         {formStatus === 'success' ? (
                             <div style={{ textAlign: 'center', padding: '2rem 0' }}>
@@ -144,7 +165,7 @@ export default function ContactPage() {
                                         name="email"
                                         type="email"
                                         className="input"
-                                        placeholder="name@company.com"
+                                        placeholder="name@mail.com"
                                         required
                                         style={{ background: "rgba(255, 255, 255, 0.03)" }}
                                     />
@@ -161,7 +182,7 @@ export default function ContactPage() {
                                     >
                                         <option value="" disabled>Select Inquiry Type</option>
                                         <option value="technical">Technical Support</option>
-                                        <option value="billing">Billing & Sales</option>
+                                        <option value="support">Support & Donations</option>
                                         <option value="strategic">Strategic Partnership</option>
                                         <option value="media">Media & Press</option>
                                         <option value="vulnerability">Vulnerability Report</option>

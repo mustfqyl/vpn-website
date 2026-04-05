@@ -39,14 +39,14 @@ export const ServerStatus = ({ serverStatus, onSelectNode }: ServerStatusProps) 
         <div className="card" style={{ display: "flex", flexDirection: "column", position: "relative", overflow: "visible" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", minHeight: "32px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", height: "32px" }}>
-                    <h3 style={{ 
-                        fontSize: "13px", 
-                        color: "var(--foreground-muted)", 
-                        fontWeight: 700, 
-                        textTransform: "uppercase", 
-                        letterSpacing: "0.05rem", 
-                        margin: 0, 
-                        padding: 0, 
+                    <h3 style={{
+                        fontSize: "13px",
+                        color: "var(--foreground-muted)",
+                        fontWeight: 700,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.05rem",
+                        margin: 0,
+                        padding: 0,
                         lineHeight: "1",
                         fontFamily: "'Outfit', sans-serif"
                     }}>Servers Status</h3>
@@ -60,11 +60,11 @@ export const ServerStatus = ({ serverStatus, onSelectNode }: ServerStatusProps) 
                 )}
             </div>
 
-            <div style={{ 
-                display: "flex", 
-                flexDirection: "column", 
-                gap: "0.75rem", 
-                overflowY: "auto", 
+            <div style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.75rem",
+                overflowY: "auto",
                 flex: 1,
                 paddingRight: "4px",
                 marginRight: "-8px",

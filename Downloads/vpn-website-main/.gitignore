@@ -3,5 +3,7 @@ node_modules
 .DS_Store
 tsconfig.tsbuildinfo
 .env
+.env*.local
+.vercel
 /src/generated/prisma
-data/
+*.log

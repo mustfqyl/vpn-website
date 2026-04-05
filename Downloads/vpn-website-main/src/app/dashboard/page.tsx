@@ -2,13 +2,12 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { ThemeSwitcher } from "./components/ThemeSwitcher";
 import { UsageStats } from "./components/UsageStats";
+import Navbar from "@/app/components/Navbar";
 import { ConnectionCode } from "./components/ConnectionCode";
-import { ServerStatus } from "./components/ServerStatus";
+import { UsageTrendChart } from "./components/UsageTrendChart";
 import { ProfileSettings } from "./components/ProfileSettings";
 import { NodeDetailPopup } from "./components/NodeDetailPopup";
-import { siteConfig } from "@/lib/siteConfig";
 import { Shield } from "lucide-react";
 import { copyToClipboard as copyToClipboardUtil } from "@/lib/clipboard";
 
@@ -192,74 +191,15 @@ export default function DashboardPage() {
         <div style={{ minHeight: "100vh", position: "relative" }}>
             <div className="bg-glow" />
 
-            <header style={{
-                backgroundColor: "var(--background-glass)",
-                backdropFilter: "blur(40px)",
-                borderBottom: "1px solid var(--card-border)",
-                position: "sticky",
-                top: 0,
-                zIndex: 40
-            }}>
-                <div className="container" style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    height: "var(--header-height)"
-                }}>
-                    <Link href="/" style={{ fontSize: "1.125rem", fontWeight: 700, letterSpacing: "-0.01em", display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                        <div style={{ width: "26px", height: "26px", background: "var(--accent)", borderRadius: "6px", display: "grid", placeItems: "center", color: "var(--background)" }}>
-                            <Shield size={16} strokeWidth={2.5} />
-                        </div>
-                        <div style={{ display: "flex", alignItems: "baseline" }}>
-                            <span style={{ fontWeight: 800 }}>{siteConfig.name.replace('VPN', '')}</span>
-                            <span style={{ fontWeight: 400, opacity: 0.6 }}>VPN</span>
-                        </div>
-                    </Link>
+            <Navbar hideLinks isLoggedIn={true} />
 
-                    <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-                        <ThemeSwitcher />
-                        <div style={{ width: "1px", height: "16px", background: "var(--card-border)" }} />
-                        <button
-                            onClick={handleLogout}
-                            className="btn btn-secondary"
-                            style={{ fontSize: "0.75rem", padding: "0.4rem 0.8rem", borderRadius: "6px" }}
-                        >
-                            Sign Out
-                        </button>
-                    </div>
-                </div>
-            </header>
-
-            <main className="container" style={{ padding: "1.5rem var(--container-padding)" }}>
+            <main className="container" style={{ paddingTop: "calc(64px + 3rem)", paddingBottom: "var(--container-padding)", paddingLeft: "var(--container-padding)", paddingRight: "var(--container-padding)" }}>
                 <div style={{ maxWidth: "900px", margin: "0 auto" }} className="animate-fadeUp">
 
-                    <div style={{ marginBottom: "1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
+                    <div style={{ marginBottom: "1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "nowrap", gap: "1rem" }}>
                         <div style={{ flex: 1 }}>
                             <h1 style={{ fontSize: "clamp(1.25rem, 5vw, 1.75rem)" }}>Dashboard</h1>
                         </div>
-                        <button
-                            onClick={() => setIsProfileOpen(true)}
-                            className="btn btn-secondary"
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "0.5rem",
-                                fontSize: "0.8125rem",
-                                padding: "0.5rem 1rem",
-                                background: "var(--background-glass)",
-                                border: "1px solid var(--card-border)",
-                                borderRadius: "8px",
-                                color: "var(--foreground)",
-                                cursor: "pointer",
-                                transition: "all 0.2s"
-                            }}
-                        >
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                                <circle cx="12" cy="7" r="4" />
-                            </svg>
-                            Profile Settings
-                        </button>
                     </div>
 
                     <UsageStats user={user} daysRemaining={daysRemaining} />
@@ -271,16 +211,13 @@ export default function DashboardPage() {
                             onCopy={copyToClipboard}
                         />
 
-                        <ServerStatus
-                            serverStatus={serverStatus}
-                            onSelectNode={setSelectedNode}
-                        />
+                        <UsageTrendChart />
                     </div>
 
                     {/* Quick Access */}
                     <div className="grid-mobile-1" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "1rem", marginTop: "1rem" }}>
-                        <Link href="/billing" className="card" style={{ padding: "1rem", textAlign: "center", transition: "all 0.2s ease" }}>
-                            <div style={{ fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--foreground-muted)" }}>Billing</div>
+                        <Link href="/donation" className="card" style={{ padding: "1rem", textAlign: "center", transition: "all 0.2s ease" }}>
+                            <div style={{ fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--foreground-muted)" }}>Support Us</div>
                         </Link>
                         <Link href="/contact" className="card" style={{ padding: "1rem", textAlign: "center", transition: "all 0.2s ease" }}>
                             <div style={{ fontSize: "0.6875rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--foreground-muted)" }}>Support</div>
@@ -289,11 +226,6 @@ export default function DashboardPage() {
                 </div>
             </main>
 
-            <ProfileSettings
-                user={user}
-                isOpen={isProfileOpen}
-                onClose={() => setIsProfileOpen(false)}
-            />
 
             {selectedNode && (
                 <NodeDetailPopup

@@ -2,24 +2,41 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/context/ThemeContext";
 import BackgroundEffects from "@/app/components/BackgroundEffects";
-
-import { siteConfig } from "@/lib/siteConfig";
+import ErrorBoundary from "@/app/components/ErrorBoundary";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import { headers } from "next/headers";
 
 export const metadata: Metadata = {
-  title: `${siteConfig.name}VPN — Private & Fast`,
-  description: `Experience the internet without limits with ${siteConfig.name}VPN. Private, fast, and secure network infrastructure.`,
-  keywords: ["VPN", "privacy", "security", "fast internet", "encrypted", "post-quantum"],
+  title: `Oculve — See Unseen`,
+  description: `Oculve: See Unseen. Experience the internet without limits. Private, lightning-fast, and post-quantum encrypted network infrastructure.`,
+  keywords: ["VPN", "privacy", "security", "fast internet", "encrypted", "post-quantum", "oculve"],
+  icons: {
+    icon: "/favicon.svg",
+    apple: "/favicon.svg",
+  },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const nonce = (await headers()).get('x-nonce') || "";
+
   return (
     <html lang="en" suppressHydrationWarning={true}>
       <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
         <script
+          nonce={nonce}
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
@@ -42,11 +59,15 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body>
-        <ThemeProvider>
-          <BackgroundEffects />
-          {children}
-        </ThemeProvider>
+      <body suppressHydrationWarning>
+        <ErrorBoundary>
+          <ThemeProvider>
+            <BackgroundEffects />
+            {children}
+            <Analytics />
+            <SpeedInsights />
+          </ThemeProvider>
+        </ErrorBoundary>
       </body>
     </html>
   );

@@ -2,7 +2,7 @@ import { VpnUser, VpnCreateOptions, VpnUpdatePayload, VpnProviderStats } from '.
 
 export interface IVpnProvider {
     /**
-     * Unique identifier for this provider (e.g. 'pasarguard', 'marzban')
+     * Unique identifier for this provider (e.g. 'oculve', 'marzban')
      */
     readonly id: string;
 
@@ -45,4 +45,14 @@ export interface IVpnProvider {
      * Reset user traffic stats
      */
     resetTraffic(username: string): Promise<boolean>;
+
+    /**
+     * Get user historical usage data
+     */
+    getUserUsage(username: string): Promise<any>;
+
+    /**
+     * Get the name of the default template assigned in the environment
+     */
+    getDefaultTemplateName(): Promise<string | null>;
 }

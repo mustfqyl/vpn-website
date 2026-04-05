@@ -1,16 +1,39 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 
 export default function PrivacyPage() {
+    const [isLoggedIn, setIsLoggedIn] = useState(() => {
+        if (typeof window !== "undefined") {
+            return document.cookie.split(";").some((c) => c.trim().startsWith("auth_status=1"));
+        }
+        return false;
+    });
+    const [isAuthLoading, setIsAuthLoading] = useState(true);
+
+    useEffect(() => {
+        fetch("/api/user/me", { credentials: "include" })
+            .then((res) => {
+                if (res.ok) {
+                    setIsLoggedIn(true);
+                } else {
+                    setIsLoggedIn(false);
+                }
+            })
+            .catch(() => { /* Silent failure */ })
+            .finally(() => setIsAuthLoading(false));
+    }, []);
     return (
         <div style={{ minHeight: "100vh", position: "relative" }}>
             <div className="bg-glow" />
 
-            <Navbar />
+            <Navbar isLoggedIn={isLoggedIn} isAuthLoading={isAuthLoading} />
 
             {/* Content */}
-            <main style={{ maxWidth: "800px", margin: "0 auto", padding: "160px 1.5rem 80px" }}>
+            <main style={{ maxWidth: "800px", margin: "0 auto", padding: "calc(var(--header-height) + 40px) 1.5rem 80px" }}>
                 <h1 style={{
                     fontSize: "clamp(2.5rem, 8vw, 3.5rem)",
                     fontWeight: 600,
@@ -31,7 +54,7 @@ export default function PrivacyPage() {
                             Standard of Absolute Trust
                         </h2>
                         <p>
-                            At SECUREVPN, privacy is not a feature—it is our primary architecture. We have built an infrastructure
+                            At OCULVE, privacy is not a feature—it is our primary architecture. We have built an infrastructure
                             that prioritizes **simplicity** and **trust**, ensuring your data is never accessible, even to us.
                         </p>
                     </section>
@@ -88,7 +111,7 @@ export default function PrivacyPage() {
 
                 <Link href="/" className="link-subtle" style={{ fontSize: "0.875rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
-                    Return to SecureVPN
+                    Return to Oculve
                 </Link>
             </main>
 

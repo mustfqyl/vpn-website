@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { use } from "react";
+import { use, useState, useEffect } from "react";
 import { BLOG_POSTS } from "@/data/blog-posts";
 import { notFound } from "next/navigation";
 import { useTheme } from "@/context/ThemeContext";
@@ -15,6 +15,26 @@ import Footer from "@/app/components/Footer";
 export default function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = use(params);
     const post = BLOG_POSTS.find((p) => p.slug === slug);
+    const [isLoggedIn, setIsLoggedIn] = useState(() => {
+        if (typeof window !== "undefined") {
+            return document.cookie.split(";").some((c) => c.trim().startsWith("auth_status=1"));
+        }
+        return false;
+    });
+    const [isAuthLoading, setIsAuthLoading] = useState(true);
+
+    useEffect(() => {
+        fetch("/api/user/me", { credentials: "include" })
+            .then((res) => {
+                if (res.ok) {
+                    setIsLoggedIn(true);
+                } else {
+                    setIsLoggedIn(false);
+                }
+            })
+            .catch(() => { /* Silent failure */ })
+            .finally(() => setIsAuthLoading(false));
+    }, []);
 
     if (!post) {
         notFound();
@@ -24,9 +44,9 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
         <div style={{ minHeight: "100vh", position: "relative" }}>
             <div className="bg-glow" />
 
-            <Navbar />
+            <Navbar isLoggedIn={isLoggedIn} isAuthLoading={isAuthLoading} />
 
-            <article className="container" style={{ padding: "160px 1.5rem 120px", maxWidth: "800px", margin: "0 auto" }}>
+            <article className="container" style={{ padding: "calc(var(--header-height) + 40px) 1.5rem 120px", maxWidth: "800px", margin: "0 auto" }}>
                 <Link href="/blog" style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.875rem", fontWeight: 600, color: "var(--accent)", marginBottom: "3rem", textDecoration: "none" }}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
                     Back to Feed
@@ -116,7 +136,7 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
                     <h2 style={{ fontSize: "2rem", fontWeight: 600, marginBottom: "1rem" }}>Secure your connection today.</h2>
                     <p style={{ color: "var(--foreground-muted)", marginBottom: "2rem" }}>Experience the protocols mentioned above in one simple interface.</p>
                     <Link href="/auth/register" className="btn btn-primary" style={{ padding: "1rem 2.5rem" }}>
-                        Join SecureVPN
+                        Join Oculve
                     </Link>
                 </div>
             </article>

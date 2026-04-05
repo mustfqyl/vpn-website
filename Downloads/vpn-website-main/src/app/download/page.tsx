@@ -2,8 +2,6 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { useTheme } from "@/context/ThemeContext";
-import { siteConfig } from "@/lib/siteConfig";
 import { 
   Apple, 
   Monitor, 
@@ -17,8 +15,29 @@ import {
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 import { copyToClipboard } from "@/lib/clipboard";
+import { useTheme } from "@/context/ThemeContext";
 
 export default function DownloadPage() {
+    const [isLoggedIn, setIsLoggedIn] = useState(() => {
+        if (typeof window !== "undefined") {
+            return document.cookie.split(";").some((c) => c.trim().startsWith("auth_status=1"));
+        }
+        return false;
+    });
+    const [isAuthLoading, setIsAuthLoading] = useState(true);
+
+    useEffect(() => {
+        fetch("/api/user/me", { credentials: "include" })
+            .then((res) => {
+                if (res.ok) {
+                    setIsLoggedIn(true);
+                } else {
+                    setIsLoggedIn(false);
+                }
+            })
+            .catch(() => { /* Silent failure */ })
+            .finally(() => setIsAuthLoading(false));
+    }, []);
   const [copied, setCopied] = useState(false);
   const { theme } = useTheme();
 
@@ -63,16 +82,16 @@ export default function DownloadPage() {
 
   const platforms = [
     { id: "windows", name: "Windows", icon: <Monitor size={24} />, version: "2.4.1", link: "/download/setup.exe" },
-    { id: "apple", name: "macOS / iOS", icon: <Apple size={24} />, version: "2.3.8", link: "https://apps.apple.com/app/securevpn" },
+    { id: "apple", name: "macOS / iOS", icon: <Apple size={24} />, version: "2.3.8", link: "https://apps.apple.com/app/oculve" },
     { id: "android", name: "Android", icon: <Smartphone size={24} />, version: "2.5.0", link: "/download/app.apk" },
-    { id: "linux", name: "Linux CLI", icon: <Terminal size={24} />, version: "1.9.2", command: "curl -sL https://securevpn.com/install.sh | sudo bash" }
+    { id: "linux", name: "Linux CLI", icon: <Terminal size={24} />, version: "1.9.2", command: "curl -sL https://oculve.com/install.sh | sudo bash" }
   ];
 
   return (
     <div className="min-h-screen" style={{ background: "var(--background)", color: "var(--foreground)" }}>
-      <Navbar />
+      <Navbar isLoggedIn={isLoggedIn} isAuthLoading={isAuthLoading} />
 
-      <main className="pt-mobile-hero" style={{ paddingTop: "140px", paddingBottom: "100px" }}>
+      <main className="pt-mobile-hero" style={{ paddingTop: "calc(var(--header-height) + 40px)", paddingBottom: "100px" }}>
         <div className="container" style={{ maxWidth: "800px" }}>
           <div style={{ marginBottom: "60px", textAlign: "left" }}>
             <h1 style={{ fontSize: "clamp(1.75rem, 8vw, 2.5rem)", fontWeight: 700, marginBottom: "0.5rem" }}>Downloads</h1>

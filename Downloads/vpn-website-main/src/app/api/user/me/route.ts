@@ -5,8 +5,6 @@ import { vpnProvider } from '@/lib/vpn/factory'
 import { getAuthenticatedUser } from '@/lib/authHelper'
 import { handleApiError, AppError } from '@/lib/api-error'
 import { logger } from '@/lib/logger'
-import { VpnSyncService } from '@/lib/vpn/sync'
-import { getPlanConfig } from '@/lib/vpn/plans'
 
 export const dynamic = 'force-dynamic'
 
@@ -22,14 +20,15 @@ export async function GET() {
         let bigIntId: bigint;
         try {
             bigIntId = BigInt(userId);
-        } catch (e) {
+        } catch {
             logger.warn({ userId }, 'Invalid user ID format in token. Clearing session.');
             const cookieStore = await cookies();
             cookieStore.delete('token');
             throw new AppError('Invalid session. Please login again.', 401);
         }
 
-        // Fetch user from PasarGuard DB via Prisma
+        // Fetch user from oculve DB via Prisma
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const user = await (prisma as any).vpnUser.findUnique({
             where: { id: bigIntId },
             include: {
@@ -44,15 +43,11 @@ export async function GET() {
         if (!user) {
             const cookieStore = await cookies();
             cookieStore.delete('token');
-            throw new AppError('User not found in PasarGuard', 404)
+            throw new AppError('User not found in oculve', 404)
         }
 
-        // Fetch live status from PasarGuard API for most up-to-date info
+        // Fetch live status from oculve API for most up-to-date info
         const pgUser = await vpnProvider.getUser(user.username);
-
-        // Determine role based on groups
-        const groupNames = user.groups.map((ug: any) => ug.group.name.toLowerCase());
-        const role = groupNames.includes('premium') ? 'PREMIUM' : (groupNames.includes('root') ? 'ADMIN' : 'TRIAL');
 
         // Usage and Status logic
         let usedGB = Number(user.usedTraffic) / (1024 ** 3);
@@ -67,26 +62,26 @@ export async function GET() {
             subscriptionUrl = pgUser.subscriptionUrl;
         }
 
-        // --- PROACTIVE FIX: Sync data limits based on role in the panel ---
-        if (role === 'PREMIUM' || role === 'ADMIN') {
-            if (limitGB !== null) {
-                logger.info({ username: user.username, currentLimit: limitGB }, 'Proactively removing data limit for Premium user');
-                vpnProvider.updateUser(user.username, { dataLimit: null }).catch(err => {
-                    logger.error({ err, username: user.username }, 'Failed to proactively remove data limit');
-                });
-                limitGB = null;
+        // Determine role and plan (dynamic from Pasarguard)
+        const role = 'USER';
+        
+        // Priority: 
+        // 1. Group Name from PG (planName)
+        // 2. Note from PG
+        // 3. Default Template Name
+        let plan = pgUser?.planName || pgUser?.note || 'Premium';
+        
+        if (plan === 'Web Kayıt' || !pgUser?.planName) {
+            const defaultName = await vpnProvider.getDefaultTemplateName();
+            if (defaultName && (!pgUser?.planName)) {
+                 // only override if we don't have a specific group name
+                 plan = defaultName;
             }
-        } else if (role === 'TRIAL') {
-            // If Trial user has no limit (null), re-apply the 5GB default limit
-            if (limitGB === null) {
-                const planConfig = getPlanConfig('Trial');
-                const trialLimit = planConfig.dataLimitGB || 5;
-                logger.info({ username: user.username }, `Proactively reapplying ${trialLimit}GB limit for Trial user`);
-                vpnProvider.updateUser(user.username, { dataLimit: trialLimit * 1024 * 1024 * 1024 }).catch(err => {
-                    logger.error({ err, username: user.username }, 'Failed to proactively reapply trial limit');
-                });
-                limitGB = trialLimit;
-            }
+        }
+        
+        // If we have a valid group name, it wins
+        if (pgUser?.planName) {
+            plan = pgUser.planName;
         }
 
         return NextResponse.json({
@@ -94,7 +89,7 @@ export async function GET() {
             authCode: user.username,
             role: role,
             status: remoteStatus,
-            plan: groupNames.includes('premium') ? 'Premium' : (groupNames.includes('trial') ? 'Trial' : 'None'),
+            plan: plan,
             expiresAt: user.expire?.toISOString() || null,
             usage: {
                 usedGB: Math.round(usedGB * 100) / 100,
@@ -104,6 +99,12 @@ export async function GET() {
             subscriptionUrl,
             devices: [], // Devices model removed
             createdAt: user.createdAt.toISOString(),
+        }, {
+            headers: {
+                'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0',
+            }
         })
 
     } catch (error) {
@@ -119,6 +120,7 @@ export async function DELETE() {
         const authUser = await getAuthenticatedUser();
         if (!authUser) throw new AppError('Unauthorized', 401);
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const user = await (prisma as any).vpnUser.findUnique({
             where: { id: BigInt(authUser.userId) }
         });
@@ -126,7 +128,7 @@ export async function DELETE() {
         if (!user) throw new AppError('User not found', 404);
 
         // 1. Delete from VPN Provider API
-        logger.info({ userId: user.id.toString(), username: user.username }, 'Account deletion: Attempting to delete via PasarGuard API');
+        logger.info({ userId: user.id.toString(), username: user.username }, 'Account deletion: Attempting to delete via oculve API');
         const vpnDeleted = await vpnProvider.deleteUser(user.username);
         
         if (!vpnDeleted) {
@@ -134,10 +136,10 @@ export async function DELETE() {
             throw new AppError('Failed to delete VPN user. Please try again later.', 500);
         }
         
-        // Note: PasarGuard might automatically remove the user from its DB if we used the API.
+        // Note: oculve might automatically remove the user from its DB if we used the API.
         // If not, we don't have DELETE permissions on the DB normally in this setup according to instructions
-        // ("Prisma artık hiç tablo OLUŞTURMUYOR. Sadece PasarGuard'ın mevcut tablolarını OKUYOR.")
-        // But the user said "Prisma query ile okunacak" and "PasarGuard API'ye POST isteği at... başka hiçbir yere yazma"
+        // ("Prisma artık hiç tablo OLUŞTURMUYOR. Sadece Oculve'ın mevcut tablolarını OKUYOR.")
+        // But the user said "Prisma query ile okunacak" and "Oculve API'ye POST isteği at... başka hiçbir yere yazma"
         // So we skip DB DELETE here as we should only use API for mutations.
 
         // Clear session cookie

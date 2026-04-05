@@ -14,6 +14,14 @@ export async function POST() {
             maxAge: 0,
             path: '/',
         })
+        // Also clear the client-visible indicator cookie
+        cookieStore.set('auth_status', '', {
+            httpOnly: false,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 0,
+            path: '/',
+        })
 
         return NextResponse.json({ success: true })
     } catch (error) {

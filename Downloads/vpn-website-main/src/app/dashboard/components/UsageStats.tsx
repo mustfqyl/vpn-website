@@ -44,7 +44,26 @@ export const UsageStats = ({ user, daysRemaining }: UsageStatsProps) => {
                     </div>
                     <p style={{ fontSize: "0.8125rem" }}>
                         {user.status === "active" || user.status === "limited"
-                            ? `${user.plan} • ${user.expiresAt ? (daysRemaining > 0 ? `Node access valid for ${daysRemaining} days` : "Subscription Expired") : "Unlimited Access"}`
+                            ? `${user.plan} • ${(() => {
+                                const remainingGB = user.usage.limitGB ? Math.max(0, user.usage.limitGB - user.usage.usedGB) : null;
+                                const hasTimeLimit = !!user.expiresAt;
+                                const hasDataLimit = user.usage.limitGB !== null;
+
+                                if (!hasTimeLimit && !hasDataLimit) return "Unlimited Access";
+
+                                const dataText = hasDataLimit 
+                                    ? `${remainingGB! < 10 ? remainingGB!.toFixed(2) : Math.round(remainingGB!)} GB remaining` 
+                                    : "unlimited data";
+
+                                if (hasTimeLimit) {
+                                    if (daysRemaining <= 0) {
+                                        return `0 days with ${dataText}`;
+                                    }
+                                    return `Up to ${daysRemaining} days with ${dataText}`;
+                                }
+
+                                return `Unlimited time with ${dataText}`;
+                            })()}`
                             : user.status === "disabled"
                                 ? "Your account has been disabled by an administrator. Please contact support."
                                 : "Extend your subscription to restore access"
@@ -52,37 +71,7 @@ export const UsageStats = ({ user, daysRemaining }: UsageStatsProps) => {
                     </p>
                 </div>
 
-                {user.role === 'TRIAL' && (
-                    <a
-                        href="/billing"
-                        className="btn btn-premium"
-                        style={{
-                            padding: "0.5rem 1rem",
-                            fontSize: "0.8125rem",
-                            textDecoration: "none",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "0.5rem",
-                        }}
-                    >
-                        Upgrade to Premium
-                    </a>
-                )}
-
-                {user.role !== 'TRIAL' && user.status !== "active" && user.status !== "limited" && user.status !== "disabled" && (
-                    <a
-                        href="/billing"
-                        className="btn btn-primary"
-                        style={{
-                            padding: "0.5rem 1rem",
-                            fontSize: "0.8125rem",
-                            textDecoration: "none",
-                            display: "inline-block"
-                        }}
-                    >
-                        Extend Subscription
-                    </a>
-                )}
+                {/* Premium upgrade button removed - service is now free */}
             </div>
 
             <div style={{ marginTop: "1.5rem", paddingTop: "1.25rem", borderTop: "1px solid var(--card-border)" }}>

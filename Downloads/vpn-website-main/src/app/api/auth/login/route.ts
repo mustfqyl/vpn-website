@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { generateToken } from '@/lib/auth'
-import { vpnProvider } from '@/lib/vpn/factory'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { z } from 'zod'
 import { cookies } from 'next/headers'
 import { handleApiError, AppError } from '@/lib/api-error'
-import { VpnSyncService } from '@/lib/vpn/sync'
+import { getClientIp } from '@/lib/network'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,9 +15,9 @@ const loginSchema = z.object({
 
 export async function POST(request: Request) {
     try {
-        const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
+        const ip = getClientIp(request);
         if (!(await checkRateLimit(ip, 5, 60 * 1000))) {
-            return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+            return NextResponse.json({ error: 'Login attempt limit reached. Please wait and try again.' }, { status: 429 });
         }
 
         const body = await request.json()
@@ -37,15 +36,8 @@ export async function POST(request: Request) {
             throw new AppError('Account is disabled', 403)
         }
 
-        // Determine role based on group (Premium, Trial, root)
-        // Groups is an array of relation objects
-        const userGroups = await prisma.usersGroupsAssociation.findMany({
-            where: { userId: user.id },
-            include: { group: true }
-        });
-        
-        const groupNames = userGroups.map(ug => ug.group.name.toLowerCase());
-        const role = groupNames.includes('premium') ? 'PREMIUM' : (groupNames.includes('root') ? 'ADMIN' : 'TRIAL');
+        // Determine role (simplified to universal USER role)
+        const role = 'USER';
 
         const token = await generateToken({
             userId: user.id.toString(), // BigInt to string
@@ -56,6 +48,14 @@ export async function POST(request: Request) {
         const cookieStore = await cookies()
         cookieStore.set('token', token, {
             httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 60 * 60 * 24, // 1 day
+            path: '/',
+        })
+        // Non-httpOnly indicator cookie so client-side JS can detect auth instantly
+        cookieStore.set('auth_status', '1', {
+            httpOnly: false,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
             maxAge: 60 * 60 * 24, // 1 day

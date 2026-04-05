@@ -1,15 +1,38 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { siteConfig } from "@/lib/siteConfig";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
 
 export default function TermsPage() {
+    const [isLoggedIn, setIsLoggedIn] = useState(() => {
+        if (typeof window !== "undefined") {
+            return document.cookie.split(";").some((c) => c.trim().startsWith("auth_status=1"));
+        }
+        return false;
+    });
+    const [isAuthLoading, setIsAuthLoading] = useState(true);
+
+    useEffect(() => {
+        fetch("/api/user/me", { credentials: "include" })
+            .then((res) => {
+                if (res.ok) {
+                    setIsLoggedIn(true);
+                } else {
+                    setIsLoggedIn(false);
+                }
+            })
+            .catch(() => { /* Silent failure */ })
+            .finally(() => setIsAuthLoading(false));
+    }, []);
     return (
         <div style={{ minHeight: "100vh" }}>
-            <Navbar />
+            <Navbar isLoggedIn={isLoggedIn} isAuthLoading={isAuthLoading} />
 
             {/* Content */}
-            <main style={{ maxWidth: "700px", margin: "0 auto", padding: "120px 1.5rem 4rem" }}>
+            <main style={{ maxWidth: "700px", margin: "0 auto", padding: "calc(var(--header-height) + 40px) 1.5rem 4rem" }}>
                 <h1 style={{ fontSize: "2rem", fontWeight: 500, marginBottom: "0.5rem" }}>
                     Terms of Service
                 </h1>
@@ -23,7 +46,7 @@ export default function TermsPage() {
                             1. Acceptance of Terms
                         </h2>
                         <p>
-                            By accessing or using SecureVPN, you agree to be bound by these Terms of Service.
+                            By accessing or using oculve, you agree to be bound by these Terms of Service.
                             If you do not agree to these terms, please do not use our service.
                         </p>
                     </section>
@@ -33,7 +56,7 @@ export default function TermsPage() {
                             2. Service Description
                         </h2>
                         <p>
-                            SecureVPN provides virtual private network services that encrypt your internet
+                            oculve provides virtual private network services that encrypt your internet
                             connection and protect your online privacy. We offer various subscription plans
                             with different features and pricing.
                         </p>
@@ -44,7 +67,7 @@ export default function TermsPage() {
                             3. Acceptable Use
                         </h2>
                         <p style={{ marginBottom: "1rem" }}>
-                            You agree not to use SecureVPN for:
+                            You agree not to use oculve for:
                         </p>
                         <ul style={{ paddingLeft: "1.5rem" }}>
                             <li>Any illegal activities under applicable law</li>
@@ -106,7 +129,7 @@ export default function TermsPage() {
                             8. Limitation of Liability
                         </h2>
                         <p>
-                            SecureVPN is provided &quot;as is&quot; without warranties of any kind. We are not liable
+                            Oculve is provided &quot;as is&quot; without warranties of any kind. We are not liable
                             for any indirect, incidental, or consequential damages arising from use of our service.
                         </p>
                     </section>

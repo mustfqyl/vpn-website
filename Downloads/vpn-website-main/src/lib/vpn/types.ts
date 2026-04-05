@@ -11,6 +11,8 @@ export interface VpnUser {
     group?: string;
     createdAt?: string;
     admin?: string;
+    note?: string;
+    planName?: string;
 }
 
 export interface VpnCreateOptions {

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Key } from "lucide-react";
 
 interface DeviceListProps {
     subscriptionUrl: string | null;
@@ -11,19 +12,28 @@ export const ConnectionCode = ({ subscriptionUrl, copySuccess, onCopy }: DeviceL
 
     return (
         <div className="card" style={{ display: "flex", flexDirection: "column", position: "relative", overflow: "visible" }}>
-            <div className="grid-mobile-1" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", position: "relative", zIndex: 10, marginBottom: "1.5rem", minHeight: "32px", flexWrap: "wrap", gap: "1rem" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", height: "32px" }}>
-                    <h3 style={{ 
-                        fontSize: "13px", 
-                        color: "var(--foreground-muted)", 
-                        fontWeight: 700, 
-                        textTransform: "uppercase", 
-                        letterSpacing: "0.05rem", 
-                        margin: 0, 
-                        padding: 0, 
-                        lineHeight: "1",
-                        fontFamily: "'Outfit', sans-serif"
-                    }}>Connection Code</h3>
+            <div className="grid-mobile-1" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", position: "relative", zIndex: 10, marginBottom: "2rem", flexWrap: "wrap", gap: "1rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", height: "40px" }}>
+                    <div style={{
+                        width: "32px", height: "32px", borderRadius: "8px",
+                        background: "var(--accent-soft)", display: "grid", placeItems: "center",
+                        color: "var(--accent)"
+                    }}>
+                        <Key size={16} strokeWidth={2.5} />
+                    </div>
+                    <div>
+                        <h3 style={{ 
+                            fontSize: "0.9rem", 
+                            color: "var(--foreground)", 
+                            fontWeight: 700, 
+                            margin: 0, 
+                            lineHeight: "1.2",
+                            fontFamily: "'Outfit', sans-serif"
+                        }}>Connection Code</h3>
+                        <p style={{ margin: 0, fontSize: "0.7rem", color: "var(--foreground-muted)", marginTop: "2px" }}>
+                            Your unique subscription key
+                        </p>
+                    </div>
                 </div>
                 <div style={{ position: "relative" }}>
                     <button 
